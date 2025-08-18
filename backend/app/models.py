@@ -17,7 +17,6 @@ class Usuario(db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     role = db.Column(db.Enum(UserRole), nullable=False)
 
-    # Configuração para herança (Single Table Inheritance)
     __mapper_args__ = {
         'polymorphic_identity': 'usuario',
         'polymorphic_on': role
@@ -26,7 +25,6 @@ class Usuario(db.Model):
 class Aluno(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
     matricula = db.Column(db.String(20), unique=True)
-    # Adicionar outros campos específicos de Aluno aqui
     
     __mapper_args__ = {
         'polymorphic_identity': UserRole.ALUNO
@@ -35,7 +33,6 @@ class Aluno(Usuario):
 class Instrutor(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
     cnh = db.Column(db.String(20), unique=True)
-    # Adicionar outros campos específicos de Instrutor aqui
     
     __mapper_args__ = {
         'polymorphic_identity': UserRole.INSTRUTOR
@@ -47,5 +44,5 @@ class Veiculo(db.Model):
     modelo = db.Column(db.String(50), nullable=False)
     marca = db.Column(db.String(50))
     ano = db.Column(db.Integer)
-    tipo = db.Column(db.String(20)) # Ex: 'Carro', 'Moto'
+    tipo = db.Column(db.String(20))
     ativo = db.Column(db.Boolean, default=True)

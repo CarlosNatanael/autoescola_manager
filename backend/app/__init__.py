@@ -17,9 +17,12 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from app.api.veiculos import bp as veiculos_bp
+    app.register_blueprint(veiculos_bp, url_prefix='/api')
+
     @app.route('/health')
     def health_check():
-        return "Beckend está saudável"
+        return "Backend está saudável"
     
     return app
 
