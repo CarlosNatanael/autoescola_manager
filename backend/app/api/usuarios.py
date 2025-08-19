@@ -8,7 +8,6 @@ bp = Blueprint('usuarios', __name__)
 def criar_usuario():
     """
     Endpoint para cadastrar um novo usuário (Aluno ou Instrutor).
-    O campo 'role' no JSON determina o tipo de usuário a ser criado.
     """
     dados = request.get_json()
 
@@ -50,6 +49,30 @@ def criar_usuario():
     db.session.commit()
 
     return jsonify({'mensagem': f'{role_str.capitalize()} cadastrado com sucesso!', 'id': novo_usuario.id}), 201
+
+@bp.route('/usuarios/<int:id>', methods=['POST'])
+def atualizar_usuario(id):
+    """
+    Endpoint para atualizar os dados de um usuário existente.
+    """
+    usuario = Usuario.query.get_or_404(id)
+    dados = request.get_json()
+
+    if not dados:
+        return jsonify({'erro': 'Nenhum dado fornecido para atualizção'}), 400
+    
+    if 'email' in dados and dados['email'] != usuario.email and Usuario.query.filter_by(email=dados['email']).first():
+        return jsonify({'erro': 'Este email já está em uso.'}), 409
+    if 'cpf' in dados and dados['cpf'] != usuario.cpf and Usuario.query.filter_by(cpf=dados['cpf']).first():
+        return jsonify({'erro': 'Este CPF já está cadastrado.'}), 409
+    
+    usuario.nome = dados.get('nome', usuario.nome)
+    usuario.email = dados.get('email', usuario.email)
+    usuario.cpf = dados.get('cpf', usuario.cpf)
+    usuario.telefone = dados.get('telefone', usuario.telefone)
+
+    if usuario.role == UserRole.ALUNO and 'matricula' in dados:
+        usuario.matricula = dados.get('matricula')
 
 @bp.route('/usuarios', methods=['GET'])
 def listar_usuarios():

@@ -8,7 +8,6 @@ bp = Blueprint('veiculos', __name__)
 def criar_veiculo():
     """
     Endpoint para cadastrar um novo veículo.
-    Espera receber um JSON com os dados do veículo.
     """
     dados = request.get_json()
 
@@ -30,6 +29,44 @@ def criar_veiculo():
     db.session.commit()
 
     return jsonify({'mensagem': 'Veículo cadastrado com sucesso!', 'id': novo_veiculo.id}), 201
+
+@bp.route('/veiculos/<int:id>', methods=['PUT'])
+def atualizar_veiculo(id):
+    """
+    Endpoint para atualizar os dados de um veículo existente.
+    """
+    veiculo = Veiculo.query.get_or_404(id)
+    dados = request.get_json()
+
+    if not dados:
+        return jsonify({'erro': 'Nenhum dado fornecido para atualização.'}), 400
+    
+    if 'placa' in dados and dados['placa'] != veiculo.placa:
+        if Veiculo.query.filter_by(placa=dados['placa']).first():
+            return jsonify({'erro': 'Já existe um veículo com esta placa.'}), 409
+        
+    veiculo.placa = dados.get('placa', veiculo.placa)
+    veiculo.modelo = dados.get('modelo', veiculo.modelo)
+    veiculo.marca = dados.get('marca', veiculo.marca)
+    veiculo.ano = dados.get('ano', veiculo.ano)
+    veiculo.tipo = dados.get('tipo', veiculo.tipo)
+
+    db.session.commit()
+    return jsonify({'mensagem': 'Veículo atualizado com sucesso!'})
+
+@bp.route('/veiculos/<int:id>', methods=['DELETE'])
+def deletar_veiculo(id):
+    """
+    Endpoint para deletar um veículo.
+    """
+    veiculo = Veiculo.query.get_or_404(id)
+    
+    if veiculo.aulas.first():
+        return jsonify({'erro': 'Não é possível excluir um veículo que já está associado a aulas.'}), 409
+
+    db.session.delete(veiculo)
+    db.session.commit()
+    return jsonify({'mensagem': 'Veículo deletado com sucesso!'})
 
 @bp.route('/veiculos', methods=['GET'])
 def listar_veiculos():
