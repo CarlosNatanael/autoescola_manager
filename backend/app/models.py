@@ -2,11 +2,18 @@ from app import db
 from datetime import datetime
 import enum
 
+# --- ENUMs ---
 class UserRole(enum.Enum):
     ADMIN = 'admin'
     INSTRUTOR = 'instrutor'
     ALUNO = 'aluno'
 
+class AulaStatus(enum.Enum):
+    AGENDADA = 'agendada'
+    CONCLUIDA = 'concluida'
+    CANCELADA = 'cancelada'
+
+# --- Modelos de Usuário ---
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
@@ -25,6 +32,7 @@ class Usuario(db.Model):
 class Aluno(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
     matricula = db.Column(db.String(20), unique=True)
+    aulas = db.relationship('Aula', back_populates='aluno', lazy='dynamic')
     
     __mapper_args__ = {
         'polymorphic_identity': UserRole.ALUNO
@@ -33,11 +41,13 @@ class Aluno(Usuario):
 class Instrutor(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
     cnh = db.Column(db.String(20), unique=True)
+    aulas = db.relationship('Aula', back_populates='instrutor', lazy='dynamic')
     
     __mapper_args__ = {
         'polymorphic_identity': UserRole.INSTRUTOR
     }
 
+# --- Modelo de Veículo ---
 class Veiculo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     placa = db.Column(db.String(8), unique=True, nullable=False)
@@ -46,3 +56,21 @@ class Veiculo(db.Model):
     ano = db.Column(db.Integer)
     tipo = db.Column(db.String(20))
     ativo = db.Column(db.Boolean, default=True)
+    aulas = db.relationship('Aula', back_populates='veiculo', lazy='dynamic')
+
+# --- NOVO MODELO AULA ---
+class Aula(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    data_hora_inicio = db.Column(db.DateTime, nullable=False)
+    data_hora_fim = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.Enum(AulaStatus), nullable=False, default=AulaStatus.AGENDADA)
+    
+    # Chaves Estrangeiras (Foreign Keys) para criar os relacionamentos
+    aluno_id = db.Column(db.Integer, db.ForeignKey('aluno.id'), nullable=False)
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutor.id'), nullable=False)
+    veiculo_id = db.Column(db.Integer, db.ForeignKey('veiculo.id'), nullable=False)
+
+    # Relacionamentos para facilitar o acesso aos objetos
+    aluno = db.relationship('Aluno', back_populates='aulas')
+    instrutor = db.relationship('Instrutor', back_populates='aulas')
+    veiculo = db.relationship('Veiculo', back_populates='aulas')
