@@ -20,6 +20,9 @@ def create_app(config_class=Config):
     from app.api.veiculos import bp as veiculos_bp
     app.register_blueprint(veiculos_bp, url_prefix='/api')
 
+    from app.api.usuarios import bp as usuarios_bp
+    app.register_blueprint(usuarios_bp, url_prefix='/api')
+
     @app.route('/health')
     def health_check():
         return "Backend está saudável"
