@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, font
 from api_client import ApiCliente
 from ui.cadastro_veiculo_window import CadastroVeiculoWindow
 from ui.cadastro_usuario_window import CadastroUsuarioWindow
@@ -12,49 +12,107 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Gestão de Autoescola")
-        self.geometry("900x600")
+        self.geometry("950x650")
+
+        # --- CONFIGURAÇÃO DE ESTILO ---
+        self.style = ttk.Style(self)
+        self.style.theme_use('clam')
+        self.configure_styles()
+        # --- FIM DA CONFIGURAÇÃO DE ESTILO ---
+
         self.api = ApiCliente()
         self.create_widgets()
+
+    def configure_styles(self):
+        """Configura a paleta de cores e os estilos dos widgets."""
+        # Paleta de Cores
+        COR_FUNDO = "#ECEFF1"
+        COR_FUNDO_FRAME = "#FFFFFF"
+        COR_LETRA = "#263238"
+        COR_PRIMARIA = "#007BFF"
+        COR_LETRA_BOTAO = "#FFFFFF"
+
+        # Fontes
+        self.default_font = font.nametofont("TkDefaultFont")
+        self.default_font.configure(family="Segoe UI", size=10)
+        
+        # Estilo geral da janela
+        self.configure(background=COR_FUNDO)
+
+        # Estilo para os Frames das Abas
+        self.style.configure('TFrame', background=COR_FUNDO_FRAME)
+        
+        # Estilo para o Notebook (Abas)
+        self.style.configure('TNotebook', background=COR_FUNDO, borderwidth=0)
+        self.style.configure('TNotebook.Tab', background="#D4D7D9", padding=[10, 5], font=("Segoe UI", 10))
+        self.style.map('TNotebook.Tab', background=[('selected', COR_FUNDO_FRAME)])
+
+        # Estilo para os Títulos
+        self.style.configure('Title.TLabel', background=COR_FUNDO_FRAME, foreground=COR_PRIMARIA, font=("Segoe UI", 16, "bold"))
+        
+        # Estilo para os Botões
+        self.style.configure('TButton', background=COR_PRIMARIA, foreground=COR_LETRA_BOTAO, font=("Segoe UI", 10, "bold"), padding=5)
+        self.style.map('TButton', background=[('active', '#0056b3')]) # Cor quando o mouse está sobre
+
+        # Estilo para a Tabela (Treeview)
+        self.style.configure("Treeview", 
+                             background=COR_FUNDO_FRAME, 
+                             foreground=COR_LETRA,
+                             rowheight=25, 
+                             fieldbackground=COR_FUNDO_FRAME)
+        self.style.map("Treeview", background=[('selected', COR_PRIMARIA)])
+        
+        # Estilo para o Cabeçalho da Tabela
+        self.style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), padding=5)
 
     def create_widgets(self):
         # Cria o widget de abas (Notebook)
         notebook = ttk.Notebook(self)
         notebook.pack(expand=True, fill='both', padx=10, pady=10)
 
-        # Cria o frame para cada aba
+        # --- Aba de Veículos ---
         self.frame_veiculos = ttk.Frame(notebook, padding="10")
-        self.frame_usuarios = ttk.Frame(notebook, padding="10")
-        self.frame_agendamentos = ttk.Frame(notebook, padding="10")
-
         notebook.add(self.frame_veiculos, text='Frota de Veículos')
-        notebook.add(self.frame_usuarios, text='Utilizadores')
-        notebook.add(self.frame_agendamentos, text="Agendamento de Aulas")
-
-        # Popula cada aba com os seus widgets
         self.create_aba_veiculos()
-        self.create_aba_usuarios()
-
-        # Carrega os dados iniciais
         self.popular_tabela_veiculos()
+
+        # --- Aba de Usuários ---
+        self.frame_usuarios = ttk.Frame(notebook, padding="10")
+        notebook.add(self.frame_usuarios, text='Utilizadores')
+        self.create_aba_usuarios()
         self.popular_tabela_usuarios()
+
+        # --- Aba de Agendamentos ---
+        self.frame_agendamentos = AgendamentoTab(notebook, self.api)
+        # Aplicar o estilo ao frame da aba de agendamento também
+        self.frame_agendamentos.configure(style='TFrame')
+        notebook.add(self.frame_agendamentos, text="Agendamento de Aulas")
 
     # --- ABA DE VEÍCULOS ---
     def create_aba_veiculos(self):
-        label_titulo = ttk.Label(self.frame_veiculos, text="Gestão da Frota", font=("Helvetica", 16))
+        label_titulo = ttk.Label(self.frame_veiculos, text="Gestão da Frota", style='Title.TLabel')
         label_titulo.pack(pady=10, anchor=tk.W)
 
+        # Adiciona um frame para a treeview para ter bordas
+        tree_container = ttk.Frame(self.frame_veiculos, style='TFrame')
+        tree_container.pack(expand=True, fill='both')
+
         colunas = ('id', 'placa', 'modelo', 'marca', 'ano', 'tipo')
-        self.tree_veiculos = ttk.Treeview(self.frame_veiculos, columns=colunas, show='headings')
+        self.tree_veiculos = ttk.Treeview(tree_container, columns=colunas, show='headings')
         self.tree_veiculos.heading('id', text='ID'); self.tree_veiculos.column('id', width=40)
         self.tree_veiculos.heading('placa', text='Placa'); self.tree_veiculos.column('placa', width=100)
         self.tree_veiculos.heading('modelo', text='Modelo'); self.tree_veiculos.column('modelo', width=150)
         self.tree_veiculos.heading('marca', text='Marca'); self.tree_veiculos.column('marca', width=150)
         self.tree_veiculos.heading('ano', text='Ano'); self.tree_veiculos.column('ano', width=60)
         self.tree_veiculos.heading('tipo', text='Tipo'); self.tree_veiculos.column('tipo', width=80)
-        self.tree_veiculos.pack(expand=True, fill='both')
+        self.tree_veiculos.pack(expand=True, fill='both', side=tk.LEFT)
+
+        scrollbar = ttk.Scrollbar(tree_container, orient="vertical", command=self.tree_veiculos.yview)
+        self.tree_veiculos.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         botoes_frame = ttk.Frame(self.frame_veiculos)
-        botoes_frame.pack(pady=10, fill='x')
+        botoes_frame.pack(pady=15, fill='x')
         ttk.Button(botoes_frame, text="Cadastrar Novo Veículo", command=self.abrir_janela_cadastro_veiculo).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Atualizar Lista", command=self.popular_tabela_veiculos).pack(side=tk.LEFT, padx=5)
 
@@ -72,21 +130,28 @@ class App(tk.Tk):
 
     # --- ABA DE UTILIZADORES ---
     def create_aba_usuarios(self):
-        label_titulo = ttk.Label(self.frame_usuarios, text="Gestão de Utilizadores", font=("Helvetica", 16))
+        label_titulo = ttk.Label(self.frame_usuarios, text="Gestão de Utilizadores", style='Title.TLabel')
         label_titulo.pack(pady=10, anchor=tk.W)
 
+        tree_container = ttk.Frame(self.frame_usuarios, style='TFrame')
+        tree_container.pack(expand=True, fill='both')
+
         colunas = ('id', 'nome', 'email', 'cpf', 'funcao', 'detalhe')
-        self.tree_usuarios = ttk.Treeview(self.frame_usuarios, columns=colunas, show='headings')
+        self.tree_usuarios = ttk.Treeview(tree_container, columns=colunas, show='headings')
         self.tree_usuarios.heading('id', text='ID'); self.tree_usuarios.column('id', width=40)
         self.tree_usuarios.heading('nome', text='Nome'); self.tree_usuarios.column('nome', width=200)
         self.tree_usuarios.heading('email', text='Email'); self.tree_usuarios.column('email', width=200)
         self.tree_usuarios.heading('cpf', text='CPF'); self.tree_usuarios.column('cpf', width=120)
         self.tree_usuarios.heading('funcao', text='Função'); self.tree_usuarios.column('funcao', width=80)
         self.tree_usuarios.heading('detalhe', text='Matrícula/CNH'); self.tree_usuarios.column('detalhe', width=120)
-        self.tree_usuarios.pack(expand=True, fill='both')
+        self.tree_usuarios.pack(expand=True, fill='both', side=tk.LEFT)
+
+        scrollbar = ttk.Scrollbar(tree_container, orient="vertical", command=self.tree_usuarios.yview)
+        self.tree_usuarios.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         botoes_frame = ttk.Frame(self.frame_usuarios)
-        botoes_frame.pack(pady=10, fill='x')
+        botoes_frame.pack(pady=15, fill='x')
         ttk.Button(botoes_frame, text="Cadastrar Novo Utilizador", command=self.abrir_janela_cadastro_usuario).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Atualizar Lista", command=self.popular_tabela_usuarios).pack(side=tk.LEFT, padx=5)
 
