@@ -23,7 +23,7 @@ class Usuario(db.Model):
     telefone = db.Column(db.String(20))
     cpf = db.Column(db.String(14), unique=True, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    role = db.Column(db.Enum(UserRole), nullable=False)
+    role = db.Column(db.Enum(UserRole, native_enum=False), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'usuario',
@@ -36,7 +36,8 @@ class Aluno(Usuario):
     aulas = db.relationship('Aula', back_populates='aluno', lazy='dynamic')
     
     __mapper_args__ = {
-        'polymorphic_identity': UserRole.ALUNO
+        # CORREÇÃO FINAL: Usar o .value para passar o texto
+        'polymorphic_identity': UserRole.ALUNO.value
     }
 
 class Instrutor(Usuario):
@@ -45,7 +46,8 @@ class Instrutor(Usuario):
     aulas = db.relationship('Aula', back_populates='instrutor', lazy='dynamic')
     
     __mapper_args__ = {
-        'polymorphic_identity': UserRole.INSTRUTOR
+        # CORREÇÃO FINAL: Usar o .value para passar o texto
+        'polymorphic_identity': UserRole.INSTRUTOR.value
     }
 
 # --- Modelo de Veículo ---
@@ -59,19 +61,17 @@ class Veiculo(db.Model):
     ativo = db.Column(db.Boolean, default=True)
     aulas = db.relationship('Aula', back_populates='veiculo', lazy='dynamic')
 
-# --- NOVO MODELO AULA ---
+# --- Modelo Aula ---
 class Aula(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_hora_inicio = db.Column(db.DateTime, nullable=False)
     data_hora_fim = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.Enum(AulaStatus), nullable=False, default=AulaStatus.AGENDADA)
+    status = db.Column(db.Enum(AulaStatus, native_enum=False), nullable=False, default='agendada')
     
-    # Chaves Estrangeiras (Foreign Keys) para criar os relacionamentos
     aluno_id = db.Column(db.Integer, db.ForeignKey('aluno.id'), nullable=False)
     instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutor.id'), nullable=False)
     veiculo_id = db.Column(db.Integer, db.ForeignKey('veiculo.id'), nullable=False)
 
-    # Relacionamentos para facilitar o acesso aos objetos
     aluno = db.relationship('Aluno', back_populates='aulas')
     instrutor = db.relationship('Instrutor', back_populates='aulas')
     veiculo = db.relationship('Veiculo', back_populates='aulas')

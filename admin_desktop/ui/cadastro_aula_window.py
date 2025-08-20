@@ -10,9 +10,8 @@ class CadastroAulaWindow(tk.Toplevel):
         self.callback_sucesso = callback_sucesso
         self.aula_existente = aula_existente
 
-        # Define o título com base no modo (edição ou criação)
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
-        self.geometry("400x300")
+        self.geometry("400x350") # Aumentei um pouco a altura para o novo campo
         self.transient(parent)
         self.grab_set()
 
@@ -45,9 +44,17 @@ class CadastroAulaWindow(tk.Toplevel):
         if not self.aula_existente:
             self.data_hora_entry.insert(0, datetime.now().strftime('%Y-%m-%d %H:00'))
 
+        if self.aula_existente:
+            ttk.Label(frame, text="Status:").grid(row=4, column=0, sticky=tk.W, pady=2)
+            self.status_combo = ttk.Combobox(frame, state="readonly", values=['agendada', 'em_andamento', 'concluida', 'cancelada'])
+            self.status_combo.grid(row=4, column=1, sticky=tk.EW, pady=2)
+
+        if not self.aula_existente:
+            self.data_hora_entry.insert(0, datetime.now().strftime('%Y-%m-%d %H:00'))
+
         texto_botao = "Atualizar" if self.aula_existente else "Agendar Aula"
         agendar_btn = ttk.Button(frame, text=texto_botao, command=self.salvar)
-        agendar_btn.grid(row=4, columnspan=2, pady=10)
+        agendar_btn.grid(row=5, columnspan=2, pady=15)
 
 
     def preencher_dados(self):
@@ -55,6 +62,8 @@ class CadastroAulaWindow(tk.Toplevel):
         data_hora = datetime.fromisoformat(self.aula_existente['data_hora_inicio'])
         self.data_hora_entry.delete(0, tk.END)
         self.data_hora_entry.insert(0, data_hora.strftime('%Y-%m-%d %H:%M'))
+        
+        self.status_combo.set(self.aula_existente['status'])
         
         aluno_nome = next((key for key, val in self.aluno_map.items() if val == self.aula_existente['aluno']['id']), None)
         if aluno_nome: self.aluno_combo.set(aluno_nome)
@@ -139,8 +148,9 @@ class CadastroAulaWindow(tk.Toplevel):
             "veiculo_id": self.veiculo_map[veiculo_selecionado],
             "data_hora_inicio": data_hora_iso
         }
+        if self.aula_existente:
+            dados_aula['status'] = self.status_combo.get()
 
-        # Decide se chama a API de atualização ou de criação
         if self.aula_existente:
             resultado = self.api_client.atualizar_aula(self.aula_existente['id'], dados_aula)
             msg_sucesso = "Aula atualizada com sucesso!"
