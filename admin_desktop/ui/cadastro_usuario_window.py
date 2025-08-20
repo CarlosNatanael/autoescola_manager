@@ -46,11 +46,6 @@ class CadastroUsuarioWindow(tk.Toplevel):
         self.role_combobox.bind("<<ComboboxSelected>>", self.toggle_campos_especificos)
         self.role_combobox.set('aluno') # Valor padrão
 
-        # Campos específicos (iniciam ocultos)
-        self.label_matricula = ttk.Label(frame, text="Matrícula:")
-        self.entry_matricula = ttk.Entry(frame, width=35)
-        self.entries['matricula'] = self.entry_matricula
-
         self.label_cnh = ttk.Label(frame, text="CNH:")
         self.entry_cnh = ttk.Entry(frame, width=35)
         self.entries['cnh'] = self.entry_cnh
@@ -67,16 +62,14 @@ class CadastroUsuarioWindow(tk.Toplevel):
         self.toggle_campos_especificos()
 
     def toggle_campos_especificos(self, event=None):
-        """Mostra/oculta os campos de matrícula ou CNH com base na função selecionada."""
         role = self.role_var.get()
-        self.label_matricula.grid_forget()
-        self.entry_matricula.grid_forget()
+        # Oculta todos primeiro
         self.label_cnh.grid_forget()
         self.entry_cnh.grid_forget()
 
         if role == 'aluno':
-            self.label_matricula.grid(row=5, column=0, sticky=tk.W, pady=5)
-            self.entry_matricula.grid(row=5, column=1, sticky=(tk.W, tk.E), pady=5)
+            # Não faz nada, o campo foi removido
+            pass
         elif role == 'instrutor':
             self.label_cnh.grid(row=5, column=0, sticky=tk.W, pady=5)
             self.entry_cnh.grid(row=5, column=1, sticky=(tk.W, tk.E), pady=5)

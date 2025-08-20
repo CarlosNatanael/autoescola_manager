@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from .cadastro_aula_window import CadastroAulaWindow
 from datetime import datetime
 
@@ -22,6 +22,12 @@ class AgendamentoTab(ttk.Frame):
         atualizar_btn = ttk.Button(action_frame, text="Atualizar Lista", command=self.atualizar_lista_aulas)
         atualizar_btn.pack(side=tk.RIGHT)
 
+        editar_btn = ttk.Button(action_frame, text="Editar Aula", command=self.editar_aula_selecionada)
+        editar_btn.pack(side=tk.LEFT, padx=5)
+        
+        excluir_btn = ttk.Button(action_frame, text="Excluir Aula", command=self.deletar_aula_selecionada, style='Delete.TButton')
+        excluir_btn.pack(side=tk.LEFT, padx=5)
+
         # Tabela (Treeview) para exibir as aulas
         tree_frame = ttk.Frame(self)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -38,6 +44,43 @@ class AgendamentoTab(ttk.Frame):
         self.tree.column("status", width=80, anchor=tk.CENTER)
 
         self.tree.pack(fill=tk.BOTH, expand=True)
+
+    def _get_selected_aula_data(self):
+        """Pega os dados completos da aula selecionada na Treeview."""
+        selection = self.tree.selection()
+        if not selection:
+            messagebox.showwarning("Nenhuma Aula Selecionada", "Por favor, selecione uma aula na lista.")
+            return None
+        
+        # Para pegar o ID, precisamos buscar os dados completos da API
+        # Assumindo que a lista 'self.aulas_list' é preenchida em 'atualizar_lista_aulas'
+        selected_item = self.tree.item(selection[0])
+        data_hora_selecionada = selected_item['values'][0]
+
+        if hasattr(self, 'aulas_list'):
+            for aula in self.aulas_list:
+                data_formatada = datetime.fromisoformat(aula['data_hora_inicio']).strftime('%d/%m/%Y %H:%M')
+                if data_formatada == data_hora_selecionada:
+                    return aula
+        return None
+
+    def editar_aula_selecionada(self):
+        aula_data = self._get_selected_aula_data()
+        if aula_data:
+            CadastroAulaWindow(self, self.api_client, self.atualizar_lista_aulas, aula_existente=aula_data)
+
+    def deletar_aula_selecionada(self):
+        aula_data = self._get_selected_aula_data()
+        if not aula_data:
+            return
+
+        if messagebox.askyesno("Confirmar Exclusão", "Tem certeza que deseja excluir a aula selecionada?"):
+            resultado = self.api_client.deletar_aula(aula_data['id'])
+            if 'erro' in resultado:
+                messagebox.showerror("Erro ao Excluir", resultado['erro'])
+            else:
+                messagebox.showinfo("Sucesso", "Aula excluída com sucesso!")
+                self.atualizar_lista_aulas()
 
     def atualizar_lista_aulas(self):
         # Limpa a tabela antes de preencher

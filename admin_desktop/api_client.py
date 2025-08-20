@@ -90,3 +90,17 @@ class ApiCliente:
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
+        
+    def atualizar_aula(self, aula_id, dados):
+        try:
+            response = requests.put(f"{self.base_url}/aulas/{aula_id}", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    def deletar_aula(self, aula_id):
+        try:
+            response = requests.delete(f"{self.base_url}/aulas/{aula_id}")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}

@@ -63,6 +63,54 @@ def agendar_aula():
 
     return jsonify({'mensagem': 'Aula agendada com sucesso!', 'id': nova_aula.id}), 201
 
+@bp.route('/aulas/<int:id>', methods=['PUT'])
+def atualizar_aula(id):
+    """Endpoint para atualizar uma aula existente."""
+    aula = Aula.query.get_or_404(id)
+    dados = request.get_json()
+
+    if not dados:
+        return jsonify({'erro': 'Dados incompletos.'}), 400
+    try:
+        inicio_aula = datetime.fromisoformat(dados['data_hora_inicio'])
+        fim_aula = inicio_aula + timedelta(minutes=50)
+    except (ValueError, KeyError):
+        return jsonify({'erro': 'Formato de data inválida ou ausente.'}), 400
+    
+    query_filter = lambda model, field_id: (
+        model.query.filter(
+            field_id == dados.get(field_id.key),
+            model.data_hora_inicio < fim_aula,
+            model.data_hora_fim > inicio_aula,
+            model.id != id
+        ).first()
+    )
+
+    if query_filter(Aula, Aula.instrutor_id):
+        return jsonify({'erro': 'Instrutor já possui uma aula neste horário.'}), 409
+    if query_filter(Aula, Aula.aluno_id):
+        return jsonify({'erro': 'Aluno já possui uma aula neste horário'}), 409
+    if query_filter(Aula, Aula.veiculo_id):
+        return jsonify({'erro': 'Veículo já está em uso neste horário.'}), 409
+    
+    aula.aluno_id = dados.get('aluno_id', aula.aluno_id)
+    aula.intrutor_id = dados.get('instrutor_id', aula.instrutor_id)
+    aula.veiculo_id = dados.get('veiculo_id', aula.veiculo_id)
+    aula.data_hora_inicio = inicio_aula
+    aula.data_hora_fim = fim_aula
+    aula.status = dados.get('status', aula.status)
+
+    db.session.commit()
+    return jsonify({'mensagem': 'Aula atualizada com sucesso!'})
+
+@bp.route('/aulas/<int:id>', methods=['DELETE'])
+def deletar_aula(id):
+    """Endpoint para deletar uma aula"""
+    aula = Aula.query.get_or_404(id)
+    db.session.delete(aula)
+    db.session.commit()
+    return jsonify({'mensagem': 'Aula deletada com sucesso!'})
+
 @bp.route('/aulas', methods=['GET'])
 def listar_aulas():
     """
