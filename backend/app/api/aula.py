@@ -23,7 +23,6 @@ def agendar_aula():
         return jsonify({'erro': 'Formato de data inválido. Use o formato ISO (YYYY-MM-DDTHH:MM:SS).'}), 400
 
     # --- Validação de Conflitos ---
-    # Verifica se o instrutor está disponível
     conflito_instrutor = Aula.query.filter(
         Aula.instrutor_id == dados['instrutor_id'],
         Aula.data_hora_inicio < fim_aula,
@@ -32,7 +31,6 @@ def agendar_aula():
     if conflito_instrutor:
         return jsonify({'erro': 'Instrutor já possui uma aula neste horário.'}), 409
 
-    # Verifica se o aluno está disponível
     conflito_aluno = Aula.query.filter(
         Aula.aluno_id == dados['aluno_id'],
         Aula.data_hora_inicio < fim_aula,
@@ -41,7 +39,6 @@ def agendar_aula():
     if conflito_aluno:
         return jsonify({'erro': 'Aluno já possui uma aula neste horário.'}), 409
 
-    # Verifica se o veículo está disponível
     conflito_veiculo = Aula.query.filter(
         Aula.veiculo_id == dados['veiculo_id'],
         Aula.data_hora_inicio < fim_aula,
@@ -75,7 +72,7 @@ def atualizar_aula(id):
         inicio_aula = datetime.fromisoformat(dados['data_hora_inicio'])
         fim_aula = inicio_aula + timedelta(minutes=50)
     except (ValueError, KeyError):
-        return jsonify({'erro': 'Formato de data inválida ou ausente.'}), 400
+        return jsonify({'erro': 'Formato de data inválido ou ausente.'}), 400
     
     query_filter = lambda model, field_id: (
         model.query.filter(
@@ -94,7 +91,7 @@ def atualizar_aula(id):
         return jsonify({'erro': 'Veículo já está em uso neste horário.'}), 409
     
     aula.aluno_id = dados.get('aluno_id', aula.aluno_id)
-    aula.intrutor_id = dados.get('instrutor_id', aula.instrutor_id)
+    aula.instrutor_id = dados.get('instrutor_id', aula.instrutor_id)
     aula.veiculo_id = dados.get('veiculo_id', aula.veiculo_id)
     aula.data_hora_inicio = inicio_aula
     aula.data_hora_fim = fim_aula

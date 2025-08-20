@@ -134,8 +134,9 @@ class App(tk.Tk):
         ttk.Button(botoes_frame, text="Editar Selecionado", command=self.editar_veiculo_selecionado).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Excluir Selecionado", command=self.deletar_veiculo_selecionado, style='Delete.TButton').pack(side=tk.LEFT, padx=5)
 
-    def abrir_janela_cadastro_veiculo(self):
-        CadastroVeiculoWindow(self, self.api, self.popular_tabela_veiculos)
+    def abrir_janela_cadastro_veiculo(self, veiculo=None):
+        CadastroVeiculoWindow(self, self.api, self.popular_tabela_veiculos, veiculo)
+
 
     def popular_tabela_veiculos(self):
         for i in self.tree_veiculos.get_children(): self.tree_veiculos.delete(i)
@@ -197,13 +198,13 @@ class App(tk.Tk):
 
         botoes_frame = ttk.Frame(self.frame_usuarios)
         botoes_frame.pack(pady=15, fill='x')
-        ttk.Button(botoes_frame, text="Cadastrar Novo", command=self.abrir_janela_cadastro_usuario).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Cadastrar Novo Usúario", command=self.abrir_janela_cadastro_usuario).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Atualizar Lista", command=self.popular_tabela_usuarios).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Editar Selecionado", command=self.editar_usuario_selecionado).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Excluir Selecionado", command=self.deletar_usuario_selecionado, style='Delete.TButton').pack(side=tk.LEFT, padx=5)
 
-    def abrir_janela_cadastro_usuario(self):
-        CadastroUsuarioWindow(self, self.api, self.popular_tabela_usuarios)
+    def abrir_janela_cadastro_usuario(self, usuario=None):
+        CadastroUsuarioWindow(self, self.api, self.popular_tabela_usuarios, usuario)
 
     def popular_tabela_usuarios(self):
         for i in self.tree_usuarios.get_children(): self.tree_usuarios.delete(i)

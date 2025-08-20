@@ -50,7 +50,7 @@ def criar_usuario():
 
     return jsonify({'mensagem': f'{role_str.capitalize()} cadastrado com sucesso!', 'id': novo_usuario.id}), 201
 
-@bp.route('/usuarios/<int:id>', methods=['POST'])
+@bp.route('/usuarios/<int:id>', methods=['PUT'])
 def atualizar_usuario(id):
     """
     Endpoint para atualizar os dados de um usuário existente.
