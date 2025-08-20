@@ -3,71 +3,90 @@ import json
 
 class ApiCliente:
     def __init__(self, base_url="https://vn75t0lq-5000.brs.devtunnels.ms/api"):
-        """
-        Inicializa o cliente com a URL base da API.
-        """
+        """Inicializa o cliente com a URL base da API."""
         self.base_url = base_url
+
+    def _handle_response(self, response):
+        """Função auxiliar para tratar as respostas e extrair JSON."""
+        try:
+            response.raise_for_status()
+            return response.json()
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            print(f"Erro na API: {e}")
+            try:
+                return {'erro': response.json().get('erro', response.text)}
+            except json.JSONDecodeError:
+                return {'erro': response.text}
 
     # --- Métodos de Veículos ---
     def listar_veiculos(self):
         try:
-            url = f"{self.base_url}/veiculos"
-            response = requests.get(url, timeout=5)
-            return response.json() if response.status_code == 200 else None
+            response = requests.get(f"{self.base_url}/veiculos")
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro de conexão com a API: {e}")
-            return None
+            return {'erro': str(e)}
 
-    def cadastrar_veiculo(self, dados_veiculo):
+    def cadastrar_veiculo(self, dados):
         try:
-            url = f"{self.base_url}/veiculos"
-            response = requests.post(url, json=dados_veiculo, timeout=5)
-            return response.json() if response.status_code == 201 else None
+            response = requests.post(f"{self.base_url}/veiculos", json=dados)
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro de conexão com a API: {e}")
-            return None
+            return {'erro': str(e)}
+
+    def atualizar_veiculo(self, veiculo_id, dados):
+        try:
+            response = requests.put(f"{self.base_url}/veiculos/{veiculo_id}", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    def deletar_veiculo(self, veiculo_id):
+        try:
+            response = requests.delete(f"{self.base_url}/veiculos/{veiculo_id}")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
 
     # --- Métodos de Utilizadores ---
     def listar_usuarios(self):
-        """Busca a lista de todos os utilizadores (alunos e instrutores)."""
         try:
-            url = f"{self.base_url}/usuarios"
-            response = requests.get(url, timeout=5)
-            return response.json() if response.status_code == 200 else None
+            response = requests.get(f"{self.base_url}/usuarios")
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro de conexão com a API: {e}")
-            return None
+            return {'erro': str(e)}
 
-    def cadastrar_usuario(self, dados_usuario):
-        """Envia os dados de um novo utilizador para a API."""
+    def cadastrar_usuario(self, dados):
         try:
-            url = f"{self.base_url}/usuarios"
-            response = requests.post(url, json=dados_usuario, timeout=5)
-            return response.json() if response.status_code == 201 else None
+            response = requests.post(f"{self.base_url}/usuarios", json=dados)
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro de conexão com a API: {e}")
-            return None
-        
-    # --- Métodos de aulas ---
+            return {'erro': str(e)}
+
+    def atualizar_usuario(self, usuario_id, dados):
+        try:
+            response = requests.put(f"{self.base_url}/usuarios/{usuario_id}", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    def deletar_usuario(self, usuario_id):
+        try:
+            response = requests.delete(f"{self.base_url}/usuarios/{usuario_id}")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    # --- Métodos de Aulas ---
     def listar_aulas(self):
-        """Busca todas as aulas agendadas na API."""
         try:
             response = requests.get(f"{self.base_url}/aulas")
-            response.raise_for_status()  # Lança uma exceção para respostas de erro (4xx ou 5xx)
-            return response.json()
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro ao buscar aulas: {e}")
-            return None
+            return {'erro': str(e)}
 
-    def agendar_aula(self, dados_aula):
-        """Envia os dados de uma nova aula para a API."""
+    def agendar_aula(self, dados):
         try:
-            response = requests.post(f"{self.base_url}/aulas", json=dados_aula)
-            response.raise_for_status()
-            return response.json()
+            response = requests.post(f"{self.base_url}/aulas", json=dados)
+            return self._handle_response(response)
         except requests.exceptions.RequestException as e:
-            print(f"Erro ao agendar aula: {e}")
-            try:
-                return {'erro': response.json().get('erro', 'Erro desconhecido')}
-            except (ValueError, AttributeError):
-                return {'erro': str(e)}
+            return {'erro': str(e)}

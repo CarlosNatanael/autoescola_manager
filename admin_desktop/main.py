@@ -18,7 +18,6 @@ class App(tk.Tk):
         self.style = ttk.Style(self)
         self.style.theme_use('clam')
         self.configure_styles()
-        # --- FIM DA CONFIGURAÇÃO DE ESTILO ---
 
         self.api = ApiCliente()
         self.create_widgets()
@@ -31,6 +30,7 @@ class App(tk.Tk):
         COR_LETRA = "#263238"
         COR_PRIMARIA = "#007BFF"
         COR_LETRA_BOTAO = "#FFFFFF"
+        COR_DELETAR = "#DC3545"
 
         # Fontes
         self.default_font = font.nametofont("TkDefaultFont")
@@ -52,7 +52,15 @@ class App(tk.Tk):
         
         # Estilo para os Botões
         self.style.configure('TButton', background=COR_PRIMARIA, foreground=COR_LETRA_BOTAO, font=("Segoe UI", 10, "bold"), padding=5)
-        self.style.map('TButton', background=[('active', '#0056b3')]) # Cor quando o mouse está sobre
+        self.style.map('TButton', background=[('active', '#0056b3')])
+
+        # Estilo para o botão Deletar
+        self.style.configure('Delete.TButton', background=COR_DELETAR, foreground=COR_LETRA_BOTAO)
+        self.style.map('Delete.TButton', background=[('active', '#c82333')])
+
+        self.style.configure("Treeview", background=COR_FUNDO_FRAME, foreground="#263238", rowheight=25, fieldbackground=COR_FUNDO_FRAME)
+        self.style.map("Treeview", background=[('selected', COR_PRIMARIA)])
+        self.style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), padding=5)
 
         # Estilo para a Tabela (Treeview)
         self.style.configure("Treeview", 
@@ -84,9 +92,17 @@ class App(tk.Tk):
 
         # --- Aba de Agendamentos ---
         self.frame_agendamentos = AgendamentoTab(notebook, self.api)
-        # Aplicar o estilo ao frame da aba de agendamento também
         self.frame_agendamentos.configure(style='TFrame')
         notebook.add(self.frame_agendamentos, text="Agendamento de Aulas")
+
+    def _get_selected_item_id(self, tree):
+        """Função auxiliar para pegar o ID do item selecionado em uma tabela."""
+        selection = tree.selection()
+        if not selection:
+            messagebox.showwarning("Nenhum Item Selecionado", "Por favor, selecione um item na lista primeiro.")
+            return None
+        item = tree.item(selection[0])
+        return item['values'][0]
 
     # --- ABA DE VEÍCULOS ---
     def create_aba_veiculos(self):
@@ -115,6 +131,8 @@ class App(tk.Tk):
         botoes_frame.pack(pady=15, fill='x')
         ttk.Button(botoes_frame, text="Cadastrar Novo Veículo", command=self.abrir_janela_cadastro_veiculo).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Atualizar Lista", command=self.popular_tabela_veiculos).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Editar Selecionado", command=self.editar_veiculo_selecionado).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Excluir Selecionado", command=self.deletar_veiculo_selecionado, style='Delete.TButton').pack(side=tk.LEFT, padx=5)
 
     def abrir_janela_cadastro_veiculo(self):
         CadastroVeiculoWindow(self, self.api, self.popular_tabela_veiculos)
@@ -127,6 +145,33 @@ class App(tk.Tk):
                 self.tree_veiculos.insert('', tk.END, values=(v['id'], v['placa'], v['modelo'], v.get('marca', ''), v.get('ano', ''), v.get('tipo', '')))
         elif veiculos is None:
             messagebox.showerror("Erro de Conexão", "Não foi possível buscar os dados de veículos.")
+
+    def editar_veiculo_selecionado(self):
+        veiculo_id = self._get_selected_item_id(self.tree_veiculos)
+        if not veiculo_id:
+            return
+
+        # Busca os dados completos do veículo na API para preencher o formulário
+        veiculos = self.api.listar_veiculos()
+        veiculo_data = next((v for v in veiculos if v['id'] == veiculo_id), None)
+        
+        if veiculo_data:
+            self.abrir_janela_cadastro_veiculo(veiculo_data)
+        else:
+            messagebox.showerror("Erro", "Não foi possível encontrar os dados do veículo selecionado.")
+
+    def deletar_veiculo_selecionado(self):
+        veiculo_id = self._get_selected_item_id(self.tree_veiculos)
+        if not veiculo_id:
+            return
+        
+        if messagebox.askyesno("Confirmar Exclusão", "Tem certeza que deseja excluir o veículo selecionado?"):
+            resultado = self.api.deletar_veiculo(veiculo_id)
+            if 'erro' in resultado:
+                messagebox.showerror("Erro ao Excluir", resultado['erro'])
+            else:
+                messagebox.showinfo("Sucesso", "Veículo excluído com sucesso!")
+                self.popular_tabela_veiculos()
 
     # --- ABA DE UTILIZADORES ---
     def create_aba_usuarios(self):
@@ -152,8 +197,10 @@ class App(tk.Tk):
 
         botoes_frame = ttk.Frame(self.frame_usuarios)
         botoes_frame.pack(pady=15, fill='x')
-        ttk.Button(botoes_frame, text="Cadastrar Novo Utilizador", command=self.abrir_janela_cadastro_usuario).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Cadastrar Novo", command=self.abrir_janela_cadastro_usuario).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Atualizar Lista", command=self.popular_tabela_usuarios).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Editar Selecionado", command=self.editar_usuario_selecionado).pack(side=tk.LEFT, padx=5)
+        ttk.Button(botoes_frame, text="Excluir Selecionado", command=self.deletar_usuario_selecionado, style='Delete.TButton').pack(side=tk.LEFT, padx=5)
 
     def abrir_janela_cadastro_usuario(self):
         CadastroUsuarioWindow(self, self.api, self.popular_tabela_usuarios)
@@ -167,6 +214,32 @@ class App(tk.Tk):
                 self.tree_usuarios.insert('', tk.END, values=(u['id'], u['nome'], u['email'], u['cpf'], u['role'], detalhe))
         elif usuarios is None:
              messagebox.showerror("Erro de Conexão", "Não foi possível buscar os dados de utilizadores.")
+
+    def editar_usuario_selecionado(self):
+        usuario_id = self._get_selected_item_id(self.tree_usuarios)
+        if not usuario_id:
+            return
+        
+        usuarios = self.api.listar_usuarios()
+        usuario_data = next((u for u in usuarios if u['id'] == usuario_id), None)
+        
+        if usuario_data:
+            self.abrir_janela_cadastro_usuario(usuario_data)
+        else:
+            messagebox.showerror("Erro", "Não foi possível encontrar os dados do usuário selecionado.")
+
+    def deletar_usuario_selecionado(self):
+        usuario_id = self._get_selected_item_id(self.tree_usuarios)
+        if not usuario_id:
+            return
+
+        if messagebox.askyesno("Confirmar Exclusão", "Tem certeza que deseja excluir o usuário selecionado?"):
+            resultado = self.api.deletar_usuario(usuario_id)
+            if 'erro' in resultado:
+                messagebox.showerror("Erro ao Excluir", resultado['erro'])
+            else:
+                messagebox.showinfo("Sucesso", "Usuário excluído com sucesso!")
+                self.popular_tabela_usuarios()
 
 if __name__ == "__main__":
     app = App()

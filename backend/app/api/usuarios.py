@@ -73,6 +73,26 @@ def atualizar_usuario(id):
 
     if usuario.role == UserRole.ALUNO and 'matricula' in dados:
         usuario.matricula = dados.get('matricula')
+    elif usuario.role == UserRole.INSTRUTOR and 'cnh' in dados:
+        usuario.cnh = dados.get('cnh')
+
+    db.session.commit()
+    return jsonify({'mensagem': 'Usúario atualizado com sucesso'})
+
+@bp.route('/usuarios/<int:id>', methods=['DELETE'])
+def deletar_usuario(id):
+    """
+    Endpoint para deletar um usuário.
+    """
+    usuario = Usuario.query.get_or_404(id)
+    
+    if (usuario.role == UserRole.ALUNO and usuario.aulas.first()) or \
+       (usuario.role == UserRole.INSTRUTOR and usuario.aulas.first()):
+        return jsonify({'erro': 'Não é possível excluir um usuário que já está associado a aulas.'}), 409
+
+    db.session.delete(usuario)
+    db.session.commit()
+    return jsonify({'mensagem': 'Usuário deletado com sucesso!'})
 
 @bp.route('/usuarios', methods=['GET'])
 def listar_usuarios():
