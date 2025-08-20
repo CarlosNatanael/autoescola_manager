@@ -12,6 +12,7 @@ class AulaStatus(enum.Enum):
     AGENDADA = 'agendada'
     CONCLUIDA = 'concluida'
     CANCELADA = 'cancelada'
+    EM_ANDAMENTO = 'em_andamento'
 
 # --- Modelos de Usuário ---
 class Usuario(db.Model):
