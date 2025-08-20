@@ -36,8 +36,7 @@ class Aluno(Usuario):
     aulas = db.relationship('Aula', back_populates='aluno', lazy='dynamic')
     
     __mapper_args__ = {
-        # CORREÇÃO FINAL: Usar o .value para passar o texto
-        'polymorphic_identity': UserRole.ALUNO.value
+        'polymorphic_identity': UserRole.ALUNO
     }
 
 class Instrutor(Usuario):
@@ -46,8 +45,7 @@ class Instrutor(Usuario):
     aulas = db.relationship('Aula', back_populates='instrutor', lazy='dynamic')
     
     __mapper_args__ = {
-        # CORREÇÃO FINAL: Usar o .value para passar o texto
-        'polymorphic_identity': UserRole.INSTRUTOR.value
+        'polymorphic_identity': UserRole.INSTRUTOR
     }
 
 # --- Modelo de Veículo ---

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Aula, Aluno, Instrutor, Veiculo
+from app.models import Aula, Aluno, Instrutor, Veiculo, AulaStatus
 from app import db
 from datetime import datetime, timedelta
 
@@ -93,9 +93,23 @@ def atualizar_aula(id):
     aula.aluno_id = dados.get('aluno_id', aula.aluno_id)
     aula.instrutor_id = dados.get('instrutor_id', aula.instrutor_id)
     aula.veiculo_id = dados.get('veiculo_id', aula.veiculo_id)
-    aula.data_hora_inicio = inicio_aula
-    aula.data_hora_fim = fim_aula
-    aula.status = dados.get('status', aula.status)
+    if 'data_hora_inicio' in dados:
+        try:
+            inicio_aula = datetime.fromisoformat(dados['data_hora_inicio'])
+            fim_aula = inicio_aula + timedelta(minutes=50)
+            aula.data_hora_inicio = inicio_aula
+            aula.data_hora_fim = fim_aula
+        except (ValueError, KeyError):
+            return jsonify({'erro': 'Formato de data inválido ou ausente.'}), 400
+
+    # CORREÇÃO AQUI: Normaliza o status antes de salvar
+    if 'status' in dados:
+        try:
+            # Converte o texto recebido (ex: 'agendada') para o membro do Enum (AulaStatus.AGENDADA)
+            status_str = dados.get('status').upper() 
+            aula.status = AulaStatus[status_str]
+        except KeyError:
+            return jsonify({'erro': f"Status '{dados.get('status')}' é inválido."}), 400
 
     db.session.commit()
     return jsonify({'mensagem': 'Aula atualizada com sucesso!'})
