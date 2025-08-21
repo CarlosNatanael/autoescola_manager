@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from admin_desktop.ui.cadastro_aula_window import CadastroAulaWindow
+from ..cadastro_aula_window import CadastroAulaWindow
 from datetime import datetime
 
 class AgendaCompletaView(ttk.Frame):

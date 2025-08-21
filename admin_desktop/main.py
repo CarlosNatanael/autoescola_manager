@@ -45,16 +45,14 @@ class App(tk.Tk):
         toolbar_frame = ttk.Frame(self.main_frame, style='Toolbar.TFrame')
         toolbar_frame.pack(side=tk.TOP, fill=tk.X)
 
-        btn_alunos = ttk.Button(toolbar_frame, text="Alunos", style='Toolbar.TButton', command=lambda: self.show_view(AlunosView))
+        btn_alunos = ttk.Button(toolbar_frame, text="Alunos", style='Toolbar.TButton', command=lambda: self.show_view
+        (AlunosView))
         btn_alunos.pack(side=tk.LEFT, padx=2, pady=2)
         btn_instrutores = ttk.Button(toolbar_frame, text="Instrutores", style='Toolbar.TButton', command=lambda: self.show_view(InstrutoresView))
         btn_instrutores.pack(side=tk.LEFT, padx=2, pady=2)
         btn_veiculos = ttk.Button(toolbar_frame, text="Veículos", style='Toolbar.TButton', command=lambda: self.show_view(VeiculosView))
         btn_veiculos.pack(side=tk.LEFT, padx=2, pady=2)
-        
-        # --- BOTÃO AGENDA COMPLETA AGORA TEM UM COMANDO ---
-        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton',
-                                command=lambda: self.show_view(AgendaCompletaView))
+        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton',command=lambda: self.show_view(AgendaCompletaView))
         btn_agenda.pack(side=tk.LEFT, padx=2, pady=2)
 
         paned_window = ttk.PanedWindow(self.main_frame, orient=tk.HORIZONTAL)

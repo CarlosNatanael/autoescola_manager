@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from admin_desktop.ui.cadastro_usuario_window import CadastroUsuarioWindow
+from ..cadastro_usuario_window import CadastroUsuarioWindow
 
 class InstrutoresView(ttk.Frame):
     def __init__(self, parent, api_client):

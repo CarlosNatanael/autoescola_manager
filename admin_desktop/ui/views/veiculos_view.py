@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from admin_desktop.ui.cadastro_veiculo_window import CadastroVeiculoWindow
+from ..cadastro_veiculo_window import CadastroVeiculoWindow
 
 class VeiculosView(ttk.Frame):
     def __init__(self, parent, api_client):
