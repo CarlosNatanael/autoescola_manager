@@ -1,4 +1,3 @@
-# Em admin_desktop/ui/cadastro_veiculo_window.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 
