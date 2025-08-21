@@ -14,6 +14,14 @@ class AulaStatus(enum.Enum):
     CANCELADA = 'cancelada'
     EM_ANDAMENTO = 'em_andamento'
 
+class CategoriaCNH(enum.Enum):
+    A = 'A'
+    B = 'B'
+    C = 'C'
+    D = 'D'
+    E = 'E'
+    AB = 'AB'
+
 # --- Modelos de Usuário ---
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +42,7 @@ class Aluno(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
     matricula = db.Column(db.String(20), unique=True)
     aulas = db.relationship('Aula', back_populates='aluno', lazy='dynamic')
+    categoria = db.Column(db.Enum(CategoriaCNH, native_enum=False), nullable=False)
     
     __mapper_args__ = {
         'polymorphic_identity': UserRole.ALUNO
