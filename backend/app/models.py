@@ -64,7 +64,8 @@ class Aula(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_hora_inicio = db.Column(db.DateTime, nullable=False)
     data_hora_fim = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.Enum(AulaStatus, native_enum=False), nullable=False, default='agendada')
+    
+    status = db.Column(db.Enum(AulaStatus, native_enum=False), nullable=False, default=AulaStatus.AGENDADA)
     
     aluno_id = db.Column(db.Integer, db.ForeignKey('aluno.id'), nullable=False)
     instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutor.id'), nullable=False)
