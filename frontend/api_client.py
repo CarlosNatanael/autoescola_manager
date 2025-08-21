@@ -62,6 +62,13 @@ class ApiCliente:
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
         
+    def get_aluno(self, aluno_id):
+        try:
+            response = requests.get(f"{self.base_url}/alunos{aluno_id}")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+        
     def atualizar_aluno(self, aluno_id, dados):
         try:
             response = requests.put(f"{self.base_url}/alunos/{aluno_id}", json=dados)

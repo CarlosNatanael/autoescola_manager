@@ -10,8 +10,14 @@ class CadastroAulaWindow(tk.Toplevel):
         self.callback_sucesso = callback_sucesso
         self.aula_existente = aula_existente
 
+        # Armazenamento de dados
+        self.todos_veiculos = []
+        self.aluno_map = {}
+        self.instrutor_map = {}
+        self.veiculo_map = {}
+
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
-        self.geometry("550x300") # Aumentei um pouco a largura para nomes maiores
+        self.geometry("550x300")
         self.transient(parent)
         self.grab_set()
 
@@ -28,6 +34,7 @@ class CadastroAulaWindow(tk.Toplevel):
         ttk.Label(frame, text="Aluno:").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.aluno_combo = ttk.Combobox(frame, state="readonly", width=40)
         self.aluno_combo.grid(row=0, column=1, sticky=tk.EW, pady=5)
+        self.aluno_combo.bind("<<ComboboxSelected>>", self.on_aluno_selecionado)
 
         ttk.Label(frame, text="Instrutor:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.instrutor_combo = ttk.Combobox(frame, state="readonly", width=40)
@@ -36,6 +43,7 @@ class CadastroAulaWindow(tk.Toplevel):
         ttk.Label(frame, text="Veículo:").grid(row=2, column=0, sticky=tk.W, pady=5)
         self.veiculo_combo = ttk.Combobox(frame, state="readonly", width=40)
         self.veiculo_combo.grid(row=2, column=1, sticky=tk.EW, pady=5)
+        self.veiculo_combo.set("Selecione um aluno primeiro...")
 
         ttk.Label(frame, text="Data e Hora (AAAA-MM-DD HH:MM):").grid(row=3, column=0, sticky=tk.W, pady=5)
         self.data_hora_entry = ttk.Entry(frame)
@@ -54,9 +62,7 @@ class CadastroAulaWindow(tk.Toplevel):
         agendar_btn.grid(row=5, columnspan=2, pady=20)
 
     def carregar_dados_iniciais(self):
-        """
-        CORREÇÃO: Carrega alunos, instrutores e veículos de seus endpoints separados.
-        """
+        """Carrega alunos, instrutores e veículos de seus endpoints separados."""
         # Carrega Alunos
         alunos_data = self.api_client.listar_alunos()
         if alunos_data and 'erro' not in alunos_data:

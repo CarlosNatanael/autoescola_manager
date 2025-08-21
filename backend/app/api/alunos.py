@@ -75,6 +75,16 @@ def atualizar_aluno(id):
     db.session.commit()
     return jsonify({'mensagem': 'Aluno atualizado com sucesso'})
 
+@bp.route('/alunos/<int:id>', methods=['GET'])
+def get_aluno(id):
+    """Endpoint para buscar um único aluno pelo ID."""
+    aluno = Aluno.query.get_or_404(id)
+    return jsonify({
+        'id': aluno.id,
+        'nome': aluno.nome,
+        'categoria': aluno.categoria.value if aluno.categoria else None
+    })
+
 @bp.route('/alunos/<int:id>', methods=['DELETE'])
 def deletar_aluno(id):
     """Endpoint para deletar um aluno."""
