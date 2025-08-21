@@ -2,25 +2,22 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 class CadastroUsuarioWindow(tk.Toplevel):
-    """Janela para cadastrar um novo utilizador (Aluno ou Instrutor)."""
-    def __init__(self, parent, api_client, on_success, usuario_existente=None):
+    """Janela para cadastrar ou editar um Aluno ou Instrutor."""
+    def __init__(self, parent, api_client, on_success, role, usuario_existente=None):
         super().__init__(parent)
         self.api = api_client
         self.on_success = on_success
         self.usuario_existente = usuario_existente
+        self.role = role  # 'aluno' ou 'instrutor'
 
-        if self.usuario_existente:
-            self.title("Editar Utilizador")
-        else:
-            self.title("Cadastrar Novo Utilizador")
+        titulo_acao = "Editar" if self.usuario_existente else "Cadastrar Novo"
+        self.title(f"{titulo_acao} {self.role.capitalize()}")
             
-        self.geometry("450x400")
+        self.geometry("450x350")
         self.transient(parent)
         self.grab_set()
 
         self.entries = {}
-        self.role_var = tk.StringVar()
-
         self.create_widgets()
         if self.usuario_existente:
             self.preencher_dados()
@@ -38,74 +35,56 @@ class CadastroUsuarioWindow(tk.Toplevel):
             entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=5)
             self.entries[campo.lower()] = entry
 
-        # Seletor de Função (Role)
-        label_role = ttk.Label(frame, text="Função:")
-        label_role.grid(row=4, column=0, sticky=tk.W, pady=5)
-        self.role_combobox = ttk.Combobox(frame, textvariable=self.role_var, values=['aluno', 'instrutor'], state='readonly')
-        self.role_combobox.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.role_combobox.bind("<<ComboboxSelected>>", self.toggle_campos_especificos)
-        self.role_combobox.set('aluno') # Valor padrão
-
-        self.label_cnh = ttk.Label(frame, text="CNH:")
-        self.entry_cnh = ttk.Entry(frame, width=35)
-        self.entries['cnh'] = self.entry_cnh
-
+        # Campo específico da função
+        if self.role == 'instrutor':
+            label_cnh = ttk.Label(frame, text="CNH:")
+            label_cnh.grid(row=4, column=0, sticky=tk.W, pady=5)
+            entry_cnh = ttk.Entry(frame, width=35)
+            entry_cnh.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
+            self.entries['cnh'] = entry_cnh
+            
         # Botão de Salvar
         texto_botao = "Atualizar" if self.usuario_existente else "Salvar"
         btn_salvar = ttk.Button(frame, text=texto_botao, command=self.salvar_usuario)
-        btn_salvar.grid(row=7, column=0, columnspan=2, pady=20)
-
-        # Se for edição, desabilita a troca de função (role)
-        if self.usuario_existente:
-            self.role_combobox.configure(state='disabled')
-
-        self.toggle_campos_especificos()
-
-    def toggle_campos_especificos(self, event=None):
-        role = self.role_var.get()
-        # Oculta todos primeiro
-        self.label_cnh.grid_forget()
-        self.entry_cnh.grid_forget()
-
-        if role == 'aluno':
-            # Não faz nada, o campo foi removido
-            pass
-        elif role == 'instrutor':
-            self.label_cnh.grid(row=5, column=0, sticky=tk.W, pady=5)
-            self.entry_cnh.grid(row=5, column=1, sticky=(tk.W, tk.E), pady=5)
+        btn_salvar.grid(row=5, column=0, columnspan=2, pady=20)
 
     def preencher_dados(self):
-        for campo_key in ['nome', 'email', 'cpf', 'telefone']:
-            self.entries[campo_key].insert(0, self.usuario_existente.get(campo_key, ''))
-        
-        role = self.usuario_existente.get('role', 'aluno')
-        self.role_var.set(role)
-        
-        if role == 'aluno':
-            self.entries['matricula'].insert(0, self.usuario_existente.get('matricula', ''))
-        elif role == 'instrutor':
-            self.entries['cnh'].insert(0, self.usuario_existente.get('cnh', ''))
-            
-        self.toggle_campos_especificos()
+        """Preenche o formulário com os dados do utilizador existente."""
+        for campo_key, entry in self.entries.items():
+            valor = self.usuario_existente.get(campo_key, "")
+            entry.insert(0, valor if valor else "")
 
     def salvar_usuario(self):
         dados_usuario = {campo: entry.get() for campo, entry in self.entries.items()}
-        dados_usuario['role'] = self.role_var.get()
 
-        if not all(dados_usuario.get(key) for key in ['nome', 'email', 'cpf', 'role']):
-            messagebox.showwarning("Campos Obrigatórios", "Nome, Email, CPF e Função são obrigatórios.")
+        # Validação de campos obrigatórios
+        campos_obrigatorios = ['nome', 'email', 'cpf']
+        if self.role == 'instrutor':
+            campos_obrigatorios.append('cnh')
+
+        if not all(dados_usuario.get(key) for key in campos_obrigatorios):
+            messagebox.showwarning("Campos Obrigatórios", "Por favor, preencha todos os campos obrigatórios.")
             return
 
-        if self.usuario_existente:
-            resultado = self.api.atualizar_usuario(self.usuario_existente['id'], dados_usuario)
-            mensagem_sucesso = "Utilizador atualizado com sucesso!"
-        else:
-            resultado = self.api.cadastrar_usuario(dados_usuario)
-            mensagem_sucesso = "Utilizador cadastrado com sucesso!"
+        resultado = None
+        mensagem_sucesso = ""
 
-        if 'erro' not in resultado:
+        if self.usuario_existente:
+            if self.role == 'aluno':
+                resultado = self.api.atualizar_aluno(self.usuario_existente['id'], dados_usuario)
+            else:
+                resultado = self.api.atualizar_instrutor(self.usuario_existente['id'], dados_usuario)
+            mensagem_sucesso = f"{self.role.capitalize()} atualizado com sucesso!"
+        else:
+            if self.role == 'aluno':
+                resultado = self.api.cadastrar_aluno(dados_usuario)
+            else:
+                resultado = self.api.cadastrar_instrutor(dados_usuario)
+            mensagem_sucesso = f"{self.role.capitalize()} cadastrado com sucesso!"
+        
+        if resultado and 'erro' not in resultado:
             messagebox.showinfo("Sucesso", mensagem_sucesso)
             self.on_success()
             self.destroy()
-        else:
+        elif resultado:
             messagebox.showerror("Erro", resultado['erro'])

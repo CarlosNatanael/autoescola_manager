@@ -47,31 +47,60 @@ class ApiCliente:
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
 
-    # --- Métodos de Utilizadores ---
-    def listar_usuarios(self):
+    # --- MÉTODOS DE ALUNOS ---
+    def listar_alunos(self):
         try:
-            response = requests.get(f"{self.base_url}/usuarios")
+            response = requests.get(f"{self.base_url}/alunos")
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
 
-    def cadastrar_usuario(self, dados):
+    def cadastrar_aluno(self, dados):
         try:
-            response = requests.post(f"{self.base_url}/usuarios", json=dados)
+            response = requests.post(f"{self.base_url}/alunos", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+        
+    def atualizar_aluno(self, aluno_id, dados):
+        try:
+            response = requests.put(f"{self.base_url}/alunos/{aluno_id}", json=dados)
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
 
-    def atualizar_usuario(self, usuario_id, dados):
+    def deletar_aluno(self, aluno_id):
         try:
-            response = requests.put(f"{self.base_url}/usuarios/{usuario_id}", json=dados)
+            response = requests.delete(f"{self.base_url}/alunos/{aluno_id}")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+        
+    # --- MÉTODOS DE INSTRUTORES ---
+    def listar_instrutores(self):
+        try:
+            response = requests.get(f"{self.base_url}/instrutores")
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
 
-    def deletar_usuario(self, usuario_id):
+    def cadastrar_instrutor(self, dados):
         try:
-            response = requests.delete(f"{self.base_url}/usuarios/{usuario_id}")
+            response = requests.post(f"{self.base_url}/instrutores", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    def atualizar_instrutor(self, instrutor_id, dados):
+        try:
+            response = requests.put(f"{self.base_url}/instrutores/{instrutor_id}", json=dados)
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
+    def deletar_instrutor(self, instrutor_id):
+        try:
+            response = requests.delete(f"{self.base_url}/instrutores/{instrutor_id}")
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
