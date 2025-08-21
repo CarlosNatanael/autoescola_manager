@@ -1,9 +1,33 @@
 from flask import Blueprint, request, jsonify
 from app.models import Aula, Aluno, Instrutor, Veiculo, AulaStatus
 from app import db
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 bp = Blueprint('aulas', __name__)
+
+@bp.route('/aulas/hoje', methods=['GET'])
+def listar_aulas_hoje():
+    """
+    Endpoint para listar apenas as aulas agendadas para o dia corrente.
+    """
+    hoje_inicio = datetime.combine(date.today(), datetime.min.time())
+    hoje_fim = datetime.combine(date.today(), datetime.max.time())
+
+    aulas = Aula.query.filter(
+        Aula.data_hora_inicio >= hoje_inicio,
+        Aula.data_hora_inicio <= hoje_fim
+    ).order_by(Aula.data_hora_inicio.asc()).all()
+    
+    lista_de_aulas = [
+        {
+            'id': aula.id,
+            'data_hora_inicio': aula.data_hora_inicio.isoformat(),
+            'aluno': { 'nome': aula.aluno.nome },
+            'instrutor': { 'nome': aula.instrutor.nome },
+            'status': aula.status.value,
+        } for aula in aulas
+    ]
+    return jsonify(lista_de_aulas)
 
 @bp.route('/aulas', methods=['POST'])
 def agendar_aula():

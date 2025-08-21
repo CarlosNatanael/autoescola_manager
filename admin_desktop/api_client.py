@@ -106,6 +106,14 @@ class ApiCliente:
             return {'erro': str(e)}
 
     # --- Métodos de Aulas ---
+
+    def listar_aulas_hoje(self):
+        try:
+            response = requests.get(f"{self.base_url}/aulas/hoje")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+
     def listar_aulas(self):
         try:
             response = requests.get(f"{self.base_url}/aulas")
