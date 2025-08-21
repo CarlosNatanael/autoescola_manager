@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, font
 
-# --- IMPORTANDO TODAS AS VIEWS PRINCIPAIS ---
 from ui.views.veiculos_view import VeiculosView
 from ui.views.alunos_view import AlunosView
 from ui.views.instrutores_view import InstrutoresView

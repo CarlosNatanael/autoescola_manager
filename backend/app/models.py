@@ -22,6 +22,12 @@ class CategoriaCNH(enum.Enum):
     E = 'E'
     AB = 'AB'
 
+class TipoVeiculo(enum.Enum):
+    MOTOCICLETA = 'Motocicleta'
+    CARRO = 'Carro'
+    ONIBUS = 'Ônibus'
+    CAMINHAO = 'Caminhão'
+
 # --- Modelos de Usuário ---
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,7 +70,7 @@ class Veiculo(db.Model):
     modelo = db.Column(db.String(50), nullable=False)
     marca = db.Column(db.String(50))
     ano = db.Column(db.Integer)
-    tipo = db.Column(db.String(20))
+    tipo = db.Column(db.Enum(TipoVeiculo, native_enum=False), nullable=False)
     ativo = db.Column(db.Boolean, default=True)
     aulas = db.relationship('Aula', back_populates='veiculo', lazy='dynamic')
 
