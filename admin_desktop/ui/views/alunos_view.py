@@ -7,7 +7,6 @@ class AlunosView(ttk.Frame):
         super().__init__(parent, padding="10")
         self.api = api_client
         
-        # Estilo para o frame interno
         self.style = ttk.Style(self)
         self.style.configure('View.TFrame', background='#FFFFFF')
         self.configure(style='View.TFrame')
@@ -25,13 +24,15 @@ class AlunosView(ttk.Frame):
         tree_container = ttk.Frame(main_frame, style='View.TFrame')
         tree_container.pack(expand=True, fill='both')
 
-        colunas = ('id', 'nome', 'email', 'cpf', 'matricula')
+        colunas = ('id', 'nome', 'email', 'cpf', 'matricula', 'categoria')
         self.tree_alunos = ttk.Treeview(tree_container, columns=colunas, show='headings')
         self.tree_alunos.heading('id', text='ID'); self.tree_alunos.column('id', width=40)
         self.tree_alunos.heading('nome', text='Nome'); self.tree_alunos.column('nome', width=250)
-        self.tree_alunos.heading('email', text='Email'); self.tree_alunos.column('email', width=250)
+        self.tree_alunos.heading('email', text='Email'); self.tree_alunos.column('email', width=200)
         self.tree_alunos.heading('cpf', text='CPF'); self.tree_alunos.column('cpf', width=120)
         self.tree_alunos.heading('matricula', text='Matrícula'); self.tree_alunos.column('matricula', width=100)
+        self.tree_alunos.heading('categoria', text='Categoria'); self.tree_alunos.column('categoria', width=80, anchor=tk.CENTER)
+        
         self.tree_alunos.pack(expand=True, fill='both', side=tk.LEFT)
 
         scrollbar = ttk.Scrollbar(tree_container, orient="vertical", command=self.tree_alunos.yview)
@@ -62,7 +63,11 @@ class AlunosView(ttk.Frame):
         alunos = self.api.listar_alunos()
         if alunos and 'erro' not in alunos:
             for aluno in alunos:
-                self.tree_alunos.insert('', tk.END, values=(aluno['id'], aluno['nome'], aluno['email'], aluno['cpf'], aluno['matricula']))
+
+                self.tree_alunos.insert('', tk.END, values=(
+                    aluno['id'], aluno['nome'], aluno['email'], 
+                    aluno['cpf'], aluno['matricula'], aluno.get('categoria', 'N/D')
+                ))
         elif alunos and 'erro' in alunos:
             messagebox.showerror("Erro de API", f"Não foi possível buscar os alunos: {alunos['erro']}")
             

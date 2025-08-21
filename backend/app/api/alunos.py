@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Aluno, Usuario
+from app.models import Aluno, Usuario,  CategoriaCNH
 from app import db
 from datetime import datetime
 
@@ -31,22 +31,28 @@ def gerar_proxima_matricula():
 @bp.route('/alunos', methods=['POST'])
 def criar_aluno():
     """Endpoint para cadastrar um novo aluno."""
+
     dados = request.get_json()
     campos_obrigatorios = ['nome', 'email', 'cpf']
+
     if not dados or not all(campo in dados for campo in campos_obrigatorios):
         return jsonify({'erro': 'Nome, email e cpf são obrigatórios.'}), 400
-
     if Usuario.query.filter_by(email=dados['email']).first():
         return jsonify({'erro': 'Este email já está em uso.'}), 409
     if Usuario.query.filter_by(cpf=dados['cpf']).first():
         return jsonify({'erro': 'Este CPF já está cadastrado.'}), 409
+    try:
+        categoria_enum = CategoriaCNH[dados['categoria']]
+    except KeyError:
+        return jsonify({'erro': f"Categoria '{dados['categoria']}' é inválida."}), 400
     
     novo_aluno = Aluno(
         nome=dados['nome'],
         email=dados['email'],
         cpf=dados['cpf'],
         telefone=dados.get('telefone'),
-        matricula=gerar_proxima_matricula()
+        matricula=gerar_proxima_matricula(),
+        categoria=categoria_enum
     )
     db.session.add(novo_aluno)
     db.session.commit()
@@ -61,6 +67,11 @@ def atualizar_aluno(id):
     aluno.email = dados.get('email', aluno.email)
     aluno.cpf = dados.get('cpf', aluno.cpf)
     aluno.telefone = dados.get('telefone', aluno.telefone)
+    if 'categoria' in dados:
+        try:
+            aluno.categoria = CategoriaCNH[dados['categoria']]
+        except KeyError:
+            return jsonify({'erro': f"Categoria '{dados['categoria']} é inválido'"}), 400
     db.session.commit()
     return jsonify({'mensagem': 'Aluno atualizado com sucesso'})
 
@@ -79,7 +90,13 @@ def listar_alunos():
     """Endpoint para listar todos os alunos."""
     alunos = Aluno.query.all()
     lista_de_alunos = [{
-        'id': a.id, 'nome': a.nome, 'email': a.email, 'cpf': a.cpf,
-        'telefone': a.telefone, 'matricula': a.matricula, 'role': 'aluno'
+        'id': a.id, 
+        'nome': a.nome, 
+        'email': a.email, 
+        'cpf': a.cpf,
+        'telefone': a.telefone, 
+        'matricula': a.matricula, 
+        'role': 'aluno',
+        'categoria': a.categoria.value if a.categoria else 'N/D'
     } for a in alunos]
     return jsonify(lista_de_alunos)

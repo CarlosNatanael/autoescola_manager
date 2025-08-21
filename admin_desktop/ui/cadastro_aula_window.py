@@ -11,7 +11,7 @@ class CadastroAulaWindow(tk.Toplevel):
         self.aula_existente = aula_existente
 
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
-        self.geometry("450x300") # Aumentei um pouco a largura para nomes maiores
+        self.geometry("550x300") # Aumentei um pouco a largura para nomes maiores
         self.transient(parent)
         self.grab_set()
 
