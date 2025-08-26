@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
+from tkcalendar import DateEntry
 
 class CadastroAulaWindow(tk.Toplevel):
     def __init__(self, parent, api_client, callback_sucesso, aula_existente=None):
@@ -46,21 +47,25 @@ class CadastroAulaWindow(tk.Toplevel):
         self.veiculo_combo.grid(row=2, column=1, sticky=tk.EW, pady=5)
         self.veiculo_combo.set("Selecione um aluno primeiro...")
 
-        ttk.Label(frame, text="Data e Hora (AAAA-MM-DD HH:MM):").grid(row=3, column=0, sticky=tk.W, pady=5)
-        self.data_hora_entry = ttk.Entry(frame)
-        self.data_hora_entry.grid(row=3, column=1, sticky=tk.EW, pady=5)
-        
-        if not self.aula_existente:
-            self.data_hora_entry.insert(0, datetime.now().strftime('%Y-%m-%d %H:00'))
+        ttk.Label(frame, text="Data:").grid(row=3, column=0, sticky=tk.W, pady=5)
+        self.data_entry = DateEntry(frame, width=18, background='darkblue', foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+        self.data_entry.grid(row=3, column=1, sticky=tk.W, pady=5)
+
+        ttk.Label(frame, text="Hora:").grid(row=3, column=1, sticky=tk.E, padx=(0, 90))
+        # Gera uma lista de horários de 30 em 30 minutos
+        horarios = [f"{h:02d}:{m:02d}" for h in range(7, 21) for m in (0, 30)]
+        self.hora_combo = ttk.Combobox(frame, values=horarios, state="readonly", width=6)
+        self.hora_combo.grid(row=3, column=1, sticky=tk.E)
+        self.hora_combo.set("10:00")
 
         if self.aula_existente:
             ttk.Label(frame, text="Status:").grid(row=4, column=0, sticky=tk.W, pady=5)
             self.status_combo = ttk.Combobox(frame, state="readonly", values=['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'])
-            self.status_combo.grid(row=4, column=1, sticky=tk.EW, pady=5)
+            self.status_combo.grid(row=4, column=1, columnspan=2, sticky=tk.EW, pady=5)
 
         texto_botao = "Atualizar" if self.aula_existente else "Agendar Aula"
         agendar_btn = ttk.Button(frame, text=texto_botao, command=self.salvar)
-        agendar_btn.grid(row=5, columnspan=2, pady=20)
+        agendar_btn.grid(row=5, columnspan=3, pady=20)
 
     def carregar_dados_iniciais(self):
         alunos_data = self.api_client.listar_alunos()
@@ -110,8 +115,6 @@ class CadastroAulaWindow(tk.Toplevel):
         self.veiculo_combo.set("")
 
     def preencher_dados(self):
-        # A lógica de preenchimento precisa ser ajustada para chamar on_aluno_selecionado
-        # para popular a lista de veículos corretamente antes de tentar selecionar um.
         data_hora = datetime.fromisoformat(self.aula_existente['data_hora_inicio'])
         self.data_hora_entry.delete(0, tk.END)
         self.data_hora_entry.insert(0, data_hora.strftime('%Y-%m-%d %H:%M'))
@@ -121,7 +124,6 @@ class CadastroAulaWindow(tk.Toplevel):
         aluno_nome = next((key for key, val in self.aluno_map.items() if val == self.aula_existente['aluno']['id']), None)
         if aluno_nome:
             self.aluno_combo.set(aluno_nome)
-            # Chama o evento manualmente para filtrar os veículos
             self.on_aluno_selecionado()
 
         instrutor_nome = next((key for key, val in self.instrutor_map.items() if val == self.aula_existente['instrutor']['id']), None)
@@ -134,17 +136,23 @@ class CadastroAulaWindow(tk.Toplevel):
         aluno_selecionado = self.aluno_combo.get()
         instrutor_selecionado = self.instrutor_combo.get()
         veiculo_selecionado = self.veiculo_combo.get()
-        data_hora_str = self.data_hora_entry.get()
+        data_selecionada = self.data_entry.get_date()
+        hora_selecionada = self.hora_combo.get()
 
-        if not all([aluno_selecionado, instrutor_selecionado, veiculo_selecionado, data_hora_str]):
-            messagebox.showerror("Erro de Validação", "Todos os campos são obrigatórios.")
+        if not hora_selecionada:
+            messagebox.showerror("Erro de Validação", "Por favor, selecione um horário.")
             return
 
         try:
-            data_hora_obj = datetime.strptime(data_hora_str, '%Y-%m-%d %H:%M')
+            # Combina a data do calendário com a hora do combobox
+            data_hora_obj = datetime.combine(data_selecionada, datetime.strptime(hora_selecionada, '%H:%M').time())
             data_hora_iso = data_hora_obj.isoformat()
-        except ValueError:
-            messagebox.showerror("Erro de Formato", "O formato da data e hora está incorreto. Use AAAA-MM-DD HH:MM.")
+        except Exception as e:
+            messagebox.showerror("Erro de Formato", f"Data ou hora inválida: {e}")
+            return
+        
+        if not all([aluno_selecionado, instrutor_selecionado, veiculo_selecionado]):
+            messagebox.showerror("Erro de Validação", "Todos os campos são obrigatórios.")
             return
 
         dados_aula = {
