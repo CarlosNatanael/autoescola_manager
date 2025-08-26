@@ -71,6 +71,14 @@ class Instrutor(Usuario):
         'polymorphic_identity': UserRole.INSTRUTOR
     }
 
+# --- CLASSE ADMIN ---
+class Admin(Usuario):
+    id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
+    
+    __mapper_args__ = {
+        'polymorphic_identity': UserRole.ADMIN
+    }
+
 # --- Modelo de Veículo ---
 class Veiculo(db.Model):
     id = db.Column(db.Integer, primary_key=True)

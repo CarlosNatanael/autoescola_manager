@@ -10,6 +10,7 @@ class LoginWindow(tk.Toplevel):
 
         self.title("Login - Gestão de Autoescola")
         self.geometry("350x200")
+        self.iconbitmap("icone.ico")
         self.transient(parent)
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)

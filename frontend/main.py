@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, font
+import os
 
 # --- Imports ---
 from ui.views.veiculos_view import VeiculosView
@@ -10,29 +11,34 @@ from ui.dashboard.agenda_dia_view import AgendaDiaView
 from api_client import ApiCliente
 from ui.login_window import LoginWindow
 
+# --- Classe App ---
 class App(tk.Toplevel):
-    def __init__(self, parent, api_client):
-        super().__init__(parent)
+    def __init__(self, master, api_client):
+        super().__init__(master)
         self.title("Gestão de Autoescola")
-        self.geometry("1200x700") 
+        self.geometry("1200x700")
+        
+        # Define o caminho do ícone de forma mais segura
+        try:
+            script_dir = os.path.dirname(__file__)
+            icon_path = os.path.join(script_dir, "..", "icone.ico")
+            self.iconbitmap(icon_path)
+        except tk.TclError:
+            print("Aviso: Arquivo 'icone.ico' não encontrado.")
 
         self.api = api_client
-        
         self.style = ttk.Style(self)
         self.style.theme_use('clam')
         self.configure_styles()
-        
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
-
         self.create_widgets()
-        
-        self.show_view(AlunosView) 
+        self.show_view(AlunosView)
 
     def configure_styles(self):
         COR_FUNDO = "#ECEFF1"
         COR_FUNDO_FRAME = "#FFFFFF"
-        self.configure(background=COR_FUNDO)
+        # Para Toplevel, a cor de fundo é aplicada no frame principal
         self.style.configure('TFrame', background=COR_FUNDO)
         self.style.configure('Toolbar.TFrame', background='#343a40')
         self.style.configure('View.TFrame', background=COR_FUNDO_FRAME) 
@@ -50,7 +56,7 @@ class App(tk.Toplevel):
         btn_instrutores.pack(side=tk.LEFT, padx=2, pady=2)
         btn_veiculos = ttk.Button(toolbar_frame, text="Veículos", style='Toolbar.TButton', command=lambda: self.show_view(VeiculosView))
         btn_veiculos.pack(side=tk.LEFT, padx=2, pady=2)
-        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton', command=lambda: self.show_view(AgendaCompletaView))
+        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton',command=lambda: self.show_view(AgendaCompletaView))
         btn_agenda.pack(side=tk.LEFT, padx=2, pady=2)
         paned_window = ttk.PanedWindow(self.main_frame, orient=tk.HORIZONTAL)
         paned_window.pack(fill=tk.BOTH, expand=True)
@@ -67,7 +73,7 @@ class App(tk.Toplevel):
         view = ViewClass(self.content_frame, self.api)
         view.pack(fill=tk.BOTH, expand=True)
 
-
+# --- Bloco de execução principal ---
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
@@ -75,8 +81,14 @@ if __name__ == "__main__":
     api = ApiCliente()
 
     def on_login_success():
-        app = App(root, api)
-        app.protocol("WM_DELETE_WINDOW", root.destroy)
-    login_window = LoginWindow(root, api, on_login_success)
+        main_app = App(root, api)
+        main_app.protocol("WM_DELETE_WINDOW", root.destroy)
+
+    login = LoginWindow(root, api, on_login_success)
     
+    # Este pequeno truque garante que a janela de login apareça
+    # sem mostrar a janela raiz extra.
+    root.deiconify()
+    root.withdraw()
+
     root.mainloop()
