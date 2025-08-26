@@ -1,20 +1,26 @@
 import tkinter as tk
 from tkinter import ttk, font
 
+# --- Imports ---
 from ui.views.veiculos_view import VeiculosView
 from ui.views.alunos_view import AlunosView
 from ui.views.instrutores_view import InstrutoresView
 from ui.views.agenda_completa_view import AgendaCompletaView
 from ui.dashboard.agenda_dia_view import AgendaDiaView
 from api_client import ApiCliente
+from ui.login_window import LoginWindow
 
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
+# --- CORREÇÃO 1: A classe App agora é um Toplevel ---
+class App(tk.Toplevel):
+    # Aceita 'parent' e 'api_client' para usar os que já existem
+    def __init__(self, parent, api_client):
+        super().__init__(parent)
         self.title("Gestão de Autoescola")
-        self.geometry("1200x700")
-        self.iconbitmap("icone.ico")
-        self.api = ApiCliente()
+        self.geometry("1200x700") 
+
+        # Usa o cliente de API que já fez o login e tem o token
+        self.api = api_client
+        
         self.style = ttk.Style(self)
         self.style.theme_use('clam')
         self.configure_styles()
@@ -28,6 +34,7 @@ class App(tk.Tk):
         self.show_view(AlunosView) 
 
     def configure_styles(self):
+        # ... (seu código de estilos existente, sem alterações)
         COR_FUNDO = "#ECEFF1"
         COR_FUNDO_FRAME = "#FFFFFF"
         self.configure(background=COR_FUNDO)
@@ -39,40 +46,53 @@ class App(tk.Tk):
         self.style.map('Toolbar.TButton', background=[('active', '#495057'), ('pressed', '#212529')])
         self.style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), padding=5)
 
-
     def create_widgets(self):
+        # ... (seu código create_widgets existente, sem alterações)
         toolbar_frame = ttk.Frame(self.main_frame, style='Toolbar.TFrame')
         toolbar_frame.pack(side=tk.TOP, fill=tk.X)
-
-        btn_alunos = ttk.Button(toolbar_frame, text="Alunos", style='Toolbar.TButton', command=lambda: self.show_view
-        (AlunosView))
+        btn_alunos = ttk.Button(toolbar_frame, text="Alunos", style='Toolbar.TButton', command=lambda: self.show_view(AlunosView))
         btn_alunos.pack(side=tk.LEFT, padx=2, pady=2)
         btn_instrutores = ttk.Button(toolbar_frame, text="Instrutores", style='Toolbar.TButton', command=lambda: self.show_view(InstrutoresView))
         btn_instrutores.pack(side=tk.LEFT, padx=2, pady=2)
         btn_veiculos = ttk.Button(toolbar_frame, text="Veículos", style='Toolbar.TButton', command=lambda: self.show_view(VeiculosView))
         btn_veiculos.pack(side=tk.LEFT, padx=2, pady=2)
-        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton',command=lambda: self.show_view(AgendaCompletaView))
+        btn_agenda = ttk.Button(toolbar_frame, text="Agenda Completa", style='Toolbar.TButton', command=lambda: self.show_view(AgendaCompletaView))
         btn_agenda.pack(side=tk.LEFT, padx=2, pady=2)
-
         paned_window = ttk.PanedWindow(self.main_frame, orient=tk.HORIZONTAL)
         paned_window.pack(fill=tk.BOTH, expand=True)
-
         self.content_frame = ttk.Frame(paned_window, style='View.TFrame')
         paned_window.add(self.content_frame, weight=3) 
-
         dashboard_container = ttk.Frame(paned_window, style='View.TFrame')
         paned_window.add(dashboard_container, weight=1)
-
         agenda_view = AgendaDiaView(dashboard_container, self.api)
         agenda_view.pack(fill=tk.BOTH, expand=True)
 
     def show_view(self, ViewClass):
+        # ... (seu código show_view existente, sem alterações)
         for widget in self.content_frame.winfo_children():
             widget.destroy()
-        
         view = ViewClass(self.content_frame, self.api)
         view.pack(fill=tk.BOTH, expand=True)
 
+
+# --- FLUXO DE INICIALIZAÇÃO CORRIGIDO ---
 if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    # Cria uma raiz Tkinter invisível para gerir as janelas
+    root = tk.Tk()
+    root.withdraw()
+
+    # Cria uma única instância do cliente de API para ser partilhada
+    api = ApiCliente()
+
+    def on_login_success():
+        # Quando o login for bem-sucedido, cria a janela principal
+        app = App(root, api)
+        # Se a janela principal for fechada, encerra toda a aplicação
+        app.protocol("WM_DELETE_WINDOW", root.destroy)
+        # Não é necessário chamar app.mainloop() aqui
+
+    # Abre a janela de login primeiro, passando a função de sucesso
+    login_window = LoginWindow(root, api, on_login_success)
+    
+    # Inicia o loop principal da aplicação. Apenas um mainloop é necessário.
+    root.mainloop()

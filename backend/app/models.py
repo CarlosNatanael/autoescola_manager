@@ -1,5 +1,6 @@
-from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from app import db
 import enum
 
 # --- ENUMs ---
@@ -37,12 +38,19 @@ class Usuario(db.Model):
     telefone = db.Column(db.String(20))
     cpf = db.Column(db.String(14), unique=True, nullable=False)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    senha_hash = db.Column(db.String(128))
     role = db.Column(db.Enum(UserRole, native_enum=False), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'usuario',
         'polymorphic_on': role
     }
+
+    def set_password(self, password):
+        self.senha_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.senha_hash, password)
 
 class Aluno(Usuario):
     id = db.Column(db.Integer, db.ForeignKey('usuario.id'), primary_key=True)

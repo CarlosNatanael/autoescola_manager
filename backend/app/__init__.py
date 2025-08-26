@@ -29,6 +29,9 @@ def create_app(config_class=Config):
     from app.api.aula import bp as aula_bp
     app.register_blueprint(aula_bp, url_prefix='/api')
 
+    from app.api.auth import bp as auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/api')
+
     @app.route('/health')
     def health_check():
         return "Backend está saudável"

@@ -33,10 +33,10 @@ def criar_aluno():
     """Endpoint para cadastrar um novo aluno."""
 
     dados = request.get_json()
-    campos_obrigatorios = ['nome', 'email', 'cpf']
 
+    campos_obrigatorios = ['nome', 'email', 'cpf', 'categoria', 'senha']
     if not dados or not all(campo in dados for campo in campos_obrigatorios):
-        return jsonify({'erro': 'Nome, email e cpf são obrigatórios.'}), 400
+        return jsonify({'erro': 'Nome, email, cpf, categoria e senha são obrigatórios.'}), 400
     if Usuario.query.filter_by(email=dados['email']).first():
         return jsonify({'erro': 'Este email já está em uso.'}), 409
     if Usuario.query.filter_by(cpf=dados['cpf']).first():
@@ -54,6 +54,7 @@ def criar_aluno():
         matricula=gerar_proxima_matricula(),
         categoria=categoria_enum
     )
+    novo_aluno.set_password(dados['senha'])
     db.session.add(novo_aluno)
     db.session.commit()
     return jsonify({'mensagem': 'Aluno cadastrado com sucesso!', 'id': novo_aluno.id}), 201

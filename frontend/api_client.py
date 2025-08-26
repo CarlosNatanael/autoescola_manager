@@ -5,6 +5,7 @@ class ApiCliente:
     def __init__(self, base_url="https://vn75t0lq-5000.brs.devtunnels.ms/api"):
         """Inicializa o cliente com a URL base da API."""
         self.base_url = base_url
+        self.token = None
 
     def _handle_response(self, response):
         """Função auxiliar para tratar as respostas e extrair JSON."""
@@ -146,5 +147,16 @@ class ApiCliente:
         try:
             response = requests.delete(f"{self.base_url}/aulas/{aula_id}")
             return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+        
+    # --- Métodos de login ---
+    def login(self, email, senha):
+        try:
+            response = requests.post(f"{self.base_url}/login", json={'email': email, 'senha': senha})
+            resultado = self._handle_response(response)
+            if resultado and 'token' in resultado:
+                self.token = resultado['token']
+            return resultado
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
