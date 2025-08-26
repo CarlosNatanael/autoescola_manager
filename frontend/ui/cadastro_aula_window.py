@@ -17,7 +17,7 @@ class CadastroAulaWindow(tk.Toplevel):
         self.veiculo_map = {}
 
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
-        self.geometry("550x300")
+        self.geometry("450x300")
         self.transient(parent)
         self.grab_set()
 
@@ -62,39 +62,66 @@ class CadastroAulaWindow(tk.Toplevel):
         agendar_btn.grid(row=5, columnspan=2, pady=20)
 
     def carregar_dados_iniciais(self):
-        """Carrega alunos, instrutores e veículos de seus endpoints separados."""
-        # Carrega Alunos
         alunos_data = self.api_client.listar_alunos()
         if alunos_data and 'erro' not in alunos_data:
-            alunos = {f"{u['nome']} ({u.get('matricula', 'N/A')})": u['id'] for u in alunos_data}
-            self.aluno_combo['values'] = list(alunos.keys())
-            self.aluno_map = alunos
+            self.aluno_map = {f"{u['nome']} ({u.get('matricula', 'N/A')})": u['id'] for u in alunos_data}
+            self.aluno_combo['values'] = list(self.aluno_map.keys())
 
-        # Carrega Instrutores
         instrutores_data = self.api_client.listar_instrutores()
         if instrutores_data and 'erro' not in instrutores_data:
-            instrutores = {f"{u['nome']} ({u.get('cnh', 'N/A')})": u['id'] for u in instrutores_data}
-            self.instrutor_combo['values'] = list(instrutores.keys())
-            self.instrutor_map = instrutores
+            self.instrutor_map = {f"{u['nome']} ({u.get('cnh', 'N/A')})": u['id'] for u in instrutores_data}
+            self.instrutor_combo['values'] = list(self.instrutor_map.keys())
 
-        # Carrega Veículos
-        veiculos = self.api_client.listar_veiculos()
-        if veiculos and 'erro' not in veiculos:
-            veiculos_map = {f"{v['modelo']} - {v['placa']}": v['id'] for v in veiculos if v.get('ativo', True)}
-            self.veiculo_combo['values'] = list(veiculos_map.keys())
-            self.veiculo_map = veiculos_map
+        self.todos_veiculos = self.api_client.listar_veiculos()
+        if not self.todos_veiculos or 'erro' in self.todos_veiculos:
+            self.todos_veiculos = []
+            messagebox.showerror("Erro", "Não foi possível carregar a lista de veículos.")
+
+    # --- MÉTODO QUE ESTAVA EM FALTA ---
+    def on_aluno_selecionado(self, event=None):
+        aluno_selecionado = self.aluno_combo.get()
+        aluno_id = self.aluno_map.get(aluno_selecionado)
+        if not aluno_id: return
+
+        aluno_info = self.api_client.get_aluno(aluno_id)
+        if not aluno_info or 'erro' in aluno_info:
+            messagebox.showerror("Erro", "Não foi possível obter a categoria do aluno.")
+            return
+        
+        categoria_aluno = aluno_info.get('categoria')
+        
+        tipos_permitidos = []
+        if 'A' in categoria_aluno:
+            tipos_permitidos.append('MOTOCICLETA')
+        if 'B' in categoria_aluno:
+            tipos_permitidos.append('CARRO')
+        if 'C' in categoria_aluno:
+            tipos_permitidos.append('CAMINHAO')
+        if 'D' in categoria_aluno:
+            tipos_permitidos.append('ONIBUS')
+        if 'E' in categoria_aluno:
+             tipos_permitidos.extend(['CAMINHAO', 'ONIBUS'])
+
+        veiculos_filtrados = [v for v in self.todos_veiculos if v.get('tipo') in tipos_permitidos and v.get('ativo', True)]
+        
+        self.veiculo_map = {f"{v['modelo']} - {v['placa']}": v['id'] for v in veiculos_filtrados}
+        self.veiculo_combo['values'] = list(self.veiculo_map.keys())
+        self.veiculo_combo.set("")
 
     def preencher_dados(self):
-        """Preenche o formulário com dados de uma aula existente."""
+        # A lógica de preenchimento precisa ser ajustada para chamar on_aluno_selecionado
+        # para popular a lista de veículos corretamente antes de tentar selecionar um.
         data_hora = datetime.fromisoformat(self.aula_existente['data_hora_inicio'])
         self.data_hora_entry.delete(0, tk.END)
         self.data_hora_entry.insert(0, data_hora.strftime('%Y-%m-%d %H:%M'))
         
         self.status_combo.set(self.aula_existente['status'].upper())
         
-        # Encontra e define o valor nos comboboxes
         aluno_nome = next((key for key, val in self.aluno_map.items() if val == self.aula_existente['aluno']['id']), None)
-        if aluno_nome: self.aluno_combo.set(aluno_nome)
+        if aluno_nome:
+            self.aluno_combo.set(aluno_nome)
+            # Chama o evento manualmente para filtrar os veículos
+            self.on_aluno_selecionado()
 
         instrutor_nome = next((key for key, val in self.instrutor_map.items() if val == self.aula_existente['instrutor']['id']), None)
         if instrutor_nome: self.instrutor_combo.set(instrutor_nome)
@@ -126,7 +153,6 @@ class CadastroAulaWindow(tk.Toplevel):
             "data_hora_inicio": data_hora_iso
         }
         if self.aula_existente:
-            # Garante que o status é enviado em minúsculas, como a API espera
             dados_aula['status'] = self.status_combo.get().lower()
 
         if self.aula_existente:
@@ -136,9 +162,9 @@ class CadastroAulaWindow(tk.Toplevel):
             resultado = self.api_client.agendar_aula(dados_aula)
             msg_sucesso = "Aula agendada com sucesso!"
 
-        if 'erro' in resultado:
-            messagebox.showerror("Erro", resultado['erro'])
-        else:
+        if resultado and 'erro' not in resultado:
             messagebox.showinfo("Sucesso", msg_sucesso)
             self.callback_sucesso()
             self.destroy()
+        elif resultado:
+            messagebox.showerror("Erro", resultado['erro'])

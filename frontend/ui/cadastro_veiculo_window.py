@@ -33,28 +33,32 @@ class CadastroVeiculoWindow(tk.Toplevel):
             entry = ttk.Entry(frame, width=30)
             entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=5)
             self.entries[campo.lower()] = entry
+            
         label_tipo = ttk.Label(frame, text="Tipo:")
         label_tipo.grid(row=4, column=0, sticky=tk.W, pady=5)
         
         tipos_veiculo = ['MOTOCICLETA', 'CARRO', 'ONIBUS', 'CAMINHAO']
         self.tipo_combo = ttk.Combobox(frame, values=tipos_veiculo, state="readonly", width=28)
         self.tipo_combo.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.tipo_combo.set('CARRO')
+        self.tipo_combo.set('CARRO') # Define um valor padrão
 
         texto_botao = "Atualizar" if self.veiculo_existente else "Salvar"
         btn_salvar = ttk.Button(frame, text=texto_botao, command=self.salvar)
-        btn_salvar.grid(row=len(campos), column=0, columnspan=2, pady=20)
+        btn_salvar.grid(row=5, column=0, columnspan=2, pady=20)
 
     def preencher_dados(self):
         """Preenche o formulário com os dados do veículo existente."""
         for campo, entry in self.entries.items():
             valor = self.veiculo_existente.get(campo, "")
-            entry.insert(0, valor if valor else "")
+            entry.insert(0, str(valor) if valor else "")
+        
+        if self.veiculo_existente.get('tipo'):
+            self.tipo_combo.set(self.veiculo_existente['tipo'])
 
     def salvar(self):
         dados_veiculo = {campo: entry.get() for campo, entry in self.entries.items()}
         dados_veiculo['tipo'] = self.tipo_combo.get()
-        
+
         if not dados_veiculo['placa'] or not dados_veiculo['modelo']:
             messagebox.showwarning("Campo Obrigatório", "Placa e Modelo são obrigatórios.")
             return
@@ -64,9 +68,10 @@ class CadastroVeiculoWindow(tk.Toplevel):
         else:
             resultado = self.api.cadastrar_veiculo(dados_veiculo)
             mensagem_sucesso = "Veículo cadastrado com sucesso!"
-        if 'erro' not in resultado:
+        
+        if resultado and 'erro' not in resultado:
             messagebox.showinfo("Sucesso", mensagem_sucesso)
             self.on_success()
             self.destroy()
-        else:
+        elif resultado:
             messagebox.showerror("Erro", resultado['erro'])
