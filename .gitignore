@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 # Ignorar banco de dados
-*.sqlite3
-*.db
+# *.sqlite3
+# *.db
 
 # Distribution / packaging
 .Python
