@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Ignorar banco de dados
+*.sqlite3
+*.db
+
 # Distribution / packaging
 .Python
 build/
