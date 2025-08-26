@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, font
-import sys
-import traceback
+import os
 
-# --- Mantenha seus imports originais aqui ---
+# --- Imports ---
 from ui.views.veiculos_view import VeiculosView
 from ui.views.alunos_view import AlunosView
 from ui.views.instrutores_view import InstrutoresView
@@ -12,26 +11,28 @@ from ui.dashboard.agenda_dia_view import AgendaDiaView
 from api_client import ApiCliente
 from ui.login_window import LoginWindow
 
-# --- Cole sua classe App aqui, sem alterações ---
 class App(tk.Toplevel):
-    # ... (seu código da classe App)
     def __init__(self, master, api_client):
         super().__init__(master)
         self.title("Gestão de Autoescola")
         self.geometry("1200x700")
-        self.iconbitmap("icone.ico")
+
+        try:
+            script_dir = os.path.dirname(__file__)
+            icon_path = os.path.join(script_dir, "..", "icone.ico")
+            if not os.path.exists(icon_path):
+                 icon_path = os.path.join(script_dir, "icone.ico")
+            self.iconbitmap(icon_path)
+        except tk.TclError:
+            print("Aviso: Arquivo 'icone.ico' não encontrado.")
 
         self.api = api_client
-
         self.style = ttk.Style(self)
         self.style.theme_use('clam')
         self.configure_styles()
-
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
-
         self.create_widgets()
-
         self.show_view(AlunosView)
 
     def configure_styles(self):
@@ -83,15 +84,17 @@ class App(tk.Toplevel):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    
     root.withdraw()
     api = ApiCliente()
+
     def on_login_success():
-        print("Login bem-sucedido! Criando a janela principal da aplicação.")
         main_app = App(root, api)
         main_app.protocol("WM_DELETE_WINDOW", root.destroy)
-        print("Janela principal da aplicação criada.")
-        
-    login = LoginWindow(root, api, on_login_success)
+
+    login_window = LoginWindow(root, api, on_login_success)
     root.deiconify()
+    root.overrideredirect(True)
+    root.geometry("0x0+9999+9999")
+    login_window.focus_force()
+
     root.mainloop()
