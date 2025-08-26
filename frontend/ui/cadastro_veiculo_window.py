@@ -37,10 +37,10 @@ class CadastroVeiculoWindow(tk.Toplevel):
         label_tipo = ttk.Label(frame, text="Tipo:")
         label_tipo.grid(row=4, column=0, sticky=tk.W, pady=5)
         
-        tipos_veiculo = ['MOTOCICLETA', 'CARRO', 'ONIBUS', 'CAMINHAO']
+        tipos_veiculo = ['Motocicleta', 'Carro', 'Ônibus', 'Caminhão']
         self.tipo_combo = ttk.Combobox(frame, values=tipos_veiculo, state="readonly", width=28)
         self.tipo_combo.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.tipo_combo.set('CARRO') # Define um valor padrão
+        self.tipo_combo.set('Carro')
 
         texto_botao = "Atualizar" if self.veiculo_existente else "Salvar"
         btn_salvar = ttk.Button(frame, text=texto_botao, command=self.salvar)

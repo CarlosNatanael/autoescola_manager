@@ -17,7 +17,7 @@ class CadastroAulaWindow(tk.Toplevel):
         self.veiculo_map = {}
 
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
-        self.geometry("450x300")
+        self.geometry("550x300")
         self.transient(parent)
         self.grab_set()
 
@@ -77,31 +77,31 @@ class CadastroAulaWindow(tk.Toplevel):
             self.todos_veiculos = []
             messagebox.showerror("Erro", "Não foi possível carregar a lista de veículos.")
 
-    # --- MÉTODO QUE ESTAVA EM FALTA ---
     def on_aluno_selecionado(self, event=None):
         aluno_selecionado = self.aluno_combo.get()
         aluno_id = self.aluno_map.get(aluno_selecionado)
+
         if not aluno_id: return
 
         aluno_info = self.api_client.get_aluno(aluno_id)
         if not aluno_info or 'erro' in aluno_info:
             messagebox.showerror("Erro", "Não foi possível obter a categoria do aluno.")
             return
-        
         categoria_aluno = aluno_info.get('categoria')
-        
+        if not categoria_aluno:
+             messagebox.showwarning("Aviso", "Este aluno não possui uma categoria de CNH definida.")
+             return
         tipos_permitidos = []
         if 'A' in categoria_aluno:
-            tipos_permitidos.append('MOTOCICLETA')
+            tipos_permitidos.append('Motocicleta')
         if 'B' in categoria_aluno:
-            tipos_permitidos.append('CARRO')
+            tipos_permitidos.append('Carro')
         if 'C' in categoria_aluno:
-            tipos_permitidos.append('CAMINHAO')
+            tipos_permitidos.append('Caminhão')
         if 'D' in categoria_aluno:
-            tipos_permitidos.append('ONIBUS')
+            tipos_permitidos.append('Ônibus')
         if 'E' in categoria_aluno:
-             tipos_permitidos.extend(['CAMINHAO', 'ONIBUS'])
-
+             tipos_permitidos.extend(['Caminhão', 'Ônibus'])
         veiculos_filtrados = [v for v in self.todos_veiculos if v.get('tipo') in tipos_permitidos and v.get('ativo', True)]
         
         self.veiculo_map = {f"{v['modelo']} - {v['placa']}": v['id'] for v in veiculos_filtrados}

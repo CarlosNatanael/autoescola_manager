@@ -64,7 +64,7 @@ class ApiCliente:
         
     def get_aluno(self, aluno_id):
         try:
-            response = requests.get(f"{self.base_url}/alunos{aluno_id}")
+            response = requests.get(f"{self.base_url}/alunos/{aluno_id}")
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
