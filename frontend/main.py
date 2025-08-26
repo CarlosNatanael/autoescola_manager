@@ -12,8 +12,8 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Gestão de Autoescola")
-        self.geometry("1200x700") 
-
+        self.geometry("1200x700")
+        self.iconbitmap("icone.ico")
         self.api = ApiCliente()
         self.style = ttk.Style(self)
         self.style.theme_use('clam')

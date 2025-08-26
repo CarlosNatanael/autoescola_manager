@@ -14,6 +14,7 @@ class CadastroVeiculoWindow(tk.Toplevel):
             self.title("Cadastrar Novo Veículo")
 
         self.geometry("400x300")
+        self.iconbitmap("icone.ico")
         self.transient(parent)
         self.grab_set()
 

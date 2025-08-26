@@ -18,6 +18,7 @@ class CadastroAulaWindow(tk.Toplevel):
 
         self.title("Editar Aula" if self.aula_existente else "Agendar Nova Aula")
         self.geometry("550x300")
+        self.iconbitmap("icone.ico")
         self.transient(parent)
         self.grab_set()
 

@@ -14,6 +14,7 @@ class CadastroUsuarioWindow(tk.Toplevel):
         self.title(f"{titulo_acao} {self.role.capitalize()}")
             
         self.geometry("450x400")
+        self.iconbitmap("icone.ico")
         self.transient(parent)
         self.grab_set()
 
