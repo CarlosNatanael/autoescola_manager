@@ -160,3 +160,11 @@ class ApiCliente:
             return resultado
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
+        
+    # --- Métodos de Dashboard ---
+    def get_dashboard_stats(self):
+        try:
+            response = requests.get(f"{self.base_url}/dashboard/stats")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
