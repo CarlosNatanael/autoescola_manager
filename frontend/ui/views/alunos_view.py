@@ -24,21 +24,22 @@ class AlunosView(ttk.Frame):
         tree_container = ttk.Frame(main_frame, style='View.TFrame')
         tree_container.pack(expand=True, fill='both')
 
-        colunas = ('id', 'nome', 'matricula', 'categoria', 'saldo_praticas', 'saldo_simulador')
+        # --- CORREÇÃO AQUI: Adicionar 'email' e 'cpf' de volta às colunas ---
+        colunas = ('id', 'nome', 'email', 'cpf', 'matricula', 'categoria', 'saldo_praticas', 'saldo_simulador')
         self.tree_alunos = ttk.Treeview(tree_container, columns=colunas, show='headings')
+        
+        # Configuração das colunas
         self.tree_alunos.heading('id', text='ID'); self.tree_alunos.column('id', width=40)
-        self.tree_alunos.heading('nome', text='Nome'); self.tree_alunos.column('nome', width=250)
+        self.tree_alunos.heading('nome', text='Nome'); self.tree_alunos.column('nome', width=200)
         self.tree_alunos.heading('email', text='Email'); self.tree_alunos.column('email', width=200)
-        self.tree_alunos.heading('cpf', text='CPF'); self.tree_alunos.column('cpf', width=120)
-        self.tree_alunos.heading('matricula', text='Matrícula'); self.tree_alunos.column('matricula', width=100)
+        self.tree_alunos.heading('cpf', text='CPF'); self.tree_alunos.column('cpf', width=110)
+        self.tree_alunos.heading('matricula', text='Matrícula'); self.tree_alunos.column('matricula', width=80)
         self.tree_alunos.heading('categoria', text='Categoria'); self.tree_alunos.column('categoria', width=80, anchor=tk.CENTER)
-        self.tree_alunos.heading('saldo_praticas', text='Saldo Aulas Práticas')
-        self.tree_alunos.column('saldo_praticas', width=140, anchor=tk.CENTER)
-        self.tree_alunos.heading('saldo_simulador', text='Saldo Simulador')
-        self.tree_alunos.column('saldo_simulador', width=120, anchor=tk.CENTER)
+        self.tree_alunos.heading('saldo_praticas', text='Saldo Práticas'); self.tree_alunos.column('saldo_praticas', width=120, anchor=tk.CENTER)
+        self.tree_alunos.heading('saldo_simulador', text='Saldo Simulador'); self.tree_alunos.column('saldo_simulador', width=120, anchor=tk.CENTER)
         
         self.tree_alunos.pack(expand=True, fill='both', side=tk.LEFT)
-
+        
         scrollbar = ttk.Scrollbar(tree_container, orient="vertical", command=self.tree_alunos.yview)
         self.tree_alunos.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -51,6 +52,30 @@ class AlunosView(ttk.Frame):
         ttk.Button(botoes_frame, text="Editar Selecionado", command=self.editar_aluno_selecionado).pack(side=tk.LEFT, padx=5)
         ttk.Button(botoes_frame, text="Excluir Selecionado", command=self.deletar_aluno_selecionado, style='Delete.TButton').pack(side=tk.LEFT, padx=5)
 
+    def popular_tabela_alunos(self):
+        for i in self.tree_alunos.get_children():
+            self.tree_alunos.delete(i)
+        
+        alunos = self.api.listar_alunos()
+        if alunos and 'erro' not in alunos:
+            for aluno in alunos:
+                saldo_praticas_str = f"{aluno.get('aulas_praticas_feitas', 0)} de {aluno.get('aulas_praticas_contratadas', 0)}"
+                saldo_simulador_str = f"{aluno.get('aulas_simulador_feitas', 0)} de {aluno.get('aulas_simulador_contratadas', 0)}"
+                
+                # --- CORREÇÃO AQUI: Adicionar os valores de 'email' e 'cpf' ---
+                self.tree_alunos.insert('', tk.END, values=(
+                    aluno['id'], 
+                    aluno['nome'], 
+                    aluno['email'],
+                    aluno['cpf'],
+                    aluno['matricula'], 
+                    aluno.get('categoria', 'N/D'),
+                    saldo_praticas_str,
+                    saldo_simulador_str
+                ))
+        elif alunos and 'erro' in alunos:
+            messagebox.showerror("Erro de API", f"Não foi possível buscar os alunos: {alunos['erro']}")
+            
     def _get_selected_item_id(self):
         selection = self.tree_alunos.selection()
         if not selection:
@@ -62,27 +87,11 @@ class AlunosView(ttk.Frame):
     def abrir_janela_cadastro(self, aluno=None):
         CadastroUsuarioWindow(self, self.api, self.popular_tabela_alunos, role='aluno', usuario_existente=aluno)
 
-    def popular_tabela_alunos(self):
-        for i in self.tree_alunos.get_children(): self.tree_alunos.delete(i)
-        alunos = self.api.listar_alunos()
-        if alunos and 'erro' not in alunos:
-            for aluno in alunos:
-                saldo_praticas_str = f"{aluno.get('aulas_praticas_feitas', 0)} de {aluno.get('aulas_praticas_contratadas', 0)}"
-                saldo_simulador_str = f"{aluno.get('aulas_simulador_feitas', 0)} de {aluno.get('aulas_simulador_contratadas', 0)}"
-                
-                self.tree_alunos.insert('', tk.END, values=(
-                    aluno['id'], aluno['nome'], 
-                    aluno['matricula'], aluno.get('categoria', 'N/D'),
-                    saldo_praticas_str,
-                    saldo_simulador_str
-                ))
-        elif alunos and 'erro' in alunos:
-            messagebox.showerror("Erro de API", f"Não foi possível buscar os alunos: {alunos['erro']}")
-            
     def editar_aluno_selecionado(self):
         aluno_id = self._get_selected_item_id()
         if not aluno_id: return
-        alunos = self.api.listar_alunos()
+        # A API já retorna todos os dados, então podemos filtrar a lista local
+        alunos = self.api.listar_alunos() 
         if alunos and 'erro' not in alunos:
             aluno_data = next((a for a in alunos if a['id'] == aluno_id), None)
             if aluno_data:
