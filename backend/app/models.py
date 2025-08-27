@@ -116,3 +116,45 @@ class Aula(db.Model):
     aluno = db.relationship('Aluno', back_populates='aulas')
     instrutor = db.relationship('Instrutor', back_populates='aulas')
     veiculo = db.relationship('Veiculo', back_populates='aulas')
+
+# --- NOVOS MODELOS FINANCEIROS ---
+
+class Servico(db.Model):
+    """ Modelo para o catálogo de serviços e pacotes """
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False, unique=True)
+    descricao = db.Column(db.String(200))
+    valor = db.Column(db.Float, nullable=False)
+    ativo = db.Column(db.Boolean, default=True)
+
+class Contrato(db.Model):
+    """ Modelo para o contrato financeiro de um aluno """
+    id = db.Column(db.Integer, primary_key=True)
+    aluno_id = db.Column(db.Integer, db.ForeignKey('aluno.id'), nullable=False)
+    data_contrato = db.Column(db.DateTime, default=datetime.utcnow)
+    valor_total = db.Column(db.Float, nullable=False)
+    
+    aluno = db.relationship('Aluno', backref=db.backref('contratos', lazy=True))
+    parcelas = db.relationship('Parcela', backref='contrato', lazy='dynamic', cascade="all, delete-orphan")
+
+class Parcela(db.Model):
+    """ Modelo para as parcelas de um contrato """
+    id = db.Column(db.Integer, primary_key=True)
+    contrato_id = db.Column(db.Integer, db.ForeignKey('contrato.id'), nullable=False)
+    numero_parcela = db.Column(db.Integer, nullable=False)
+    valor_original = db.Column(db.Float, nullable=False)
+    valor_pago = db.Column(db.Float, default=0.0)
+    data_vencimento = db.Column(db.Date, nullable=False)
+    data_pagamento = db.Column(db.Date)
+    status = db.Column(db.String(20), default='Pendente') # Pendente, Paga, Atrasada
+
+class LancamentoCaixa(db.Model):
+    """ Modelo para o fluxo de caixa (contas a pagar e receber) """
+    id = db.Column(db.Integer, primary_key=True)
+    descricao = db.Column(db.String(200), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    tipo = db.Column(db.String(10), nullable=False) # 'Entrada' ou 'Saida'
+    data_lancamento = db.Column(db.Date, nullable=False)
+    aluno_id = db.Column(db.Integer, db.ForeignKey('aluno.id'), nullable=True) # Opcional, para ligar a um aluno
+    
+    aluno = db.relationship('Aluno')
