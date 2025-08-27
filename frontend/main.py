@@ -1,5 +1,5 @@
-import tkinter as tk
 from tkinter import ttk, font
+import tkinter as tk
 import os
 
 # --- Imports ---

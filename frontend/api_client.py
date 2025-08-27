@@ -168,3 +168,17 @@ class ApiCliente:
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             return {'erro': str(e)}
+        
+    def get_aulas_por_mes(self):
+        try:
+            response = requests.get(f"{self.base_url}/dashboard/aulas_por_mes")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}
+    
+    def get_aulas_por_instrutor(self):
+        try:
+            response = requests.get(f"{self.base_url}/dashboard/aulas_por_instrutor")
+            return self._handle_response(response)
+        except requests.exceptions.RequestException as e:
+            return {'erro': str(e)}

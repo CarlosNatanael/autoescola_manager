@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Aula, Aluno, Instrutor, Veiculo, AulaStatus
+from app.models import Aula, AulaStatus, TipoAula
 from app import db
 from datetime import datetime, timedelta, date
 
@@ -31,10 +31,7 @@ def listar_aulas_hoje():
 
 @bp.route('/aulas', methods=['POST'])
 def agendar_aula():
-    """
-    Endpoint para agendar uma nova aula.
-    A duração da aula é fixada em 50 minutos.
-    """
+    """Endpoint para agendar uma nova aula."""
     dados = request.get_json()
     campos_obrigatorios = ['aluno_id', 'instrutor_id', 'veiculo_id', 'data_hora_inicio']
     if not dados or not all(campo in dados for campo in campos_obrigatorios):
@@ -71,12 +68,18 @@ def agendar_aula():
     if conflito_veiculo:
         return jsonify({'erro': 'Veículo já está em uso neste horário.'}), 409
 
+    try:
+        tipo_aula_enum = TipoAula[dados['tipo_aula'].upper()]
+    except (KeyError, AttributeError):
+        return jsonify({'erro': "Tipo de aula inválido ou não fornecido."}), 400
+
     nova_aula = Aula(
         aluno_id=dados['aluno_id'],
         instrutor_id=dados['instrutor_id'],
         veiculo_id=dados['veiculo_id'],
         data_hora_inicio=inicio_aula,
-        data_hora_fim=fim_aula
+        data_hora_fim=fim_aula,
+        tipo_aula=tipo_aula_enum
     )
 
     db.session.add(nova_aula)

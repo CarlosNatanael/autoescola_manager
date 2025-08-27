@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Aluno, Usuario,  CategoriaCNH
+from app.models import Aluno, Usuario,  CategoriaCNH, AulaStatus, TipoAula
 from app import db
 from datetime import datetime
 
@@ -108,17 +108,32 @@ def deletar_aluno(id):
 def listar_alunos():
     """Endpoint para listar todos os alunos."""
     alunos = Aluno.query.all()
-    lista_de_alunos = [{
-        'id': a.id, 
-        'nome': a.nome, 
-        'email': a.email, 
-        'cpf': a.cpf,
-        'telefone': a.telefone, 
-        'matricula': a.matricula, 
-        'role': 'aluno',
-        'categoria': a.categoria.value if a.categoria else 'N/D',
-        'aulas_praticas_contratadas': a.aulas_praticas_contratadas,
-        'aulas_simulador_contratadas': a.aulas_simulador_contratadas,
-        'aulas_extras_contratadas': a.aulas_extras_contratadas
-    } for a in alunos]
+    lista_de_alunos = []
+    for a in alunos:
+        # Contar aulas concluídas para cada tipo
+        aulas_praticas_feitas = a.aulas.filter_by(status=AulaStatus.CONCLUIDA, tipo_aula=TipoAula.PRATICA).count()
+        aulas_simulador_feitas = a.aulas.filter_by(status=AulaStatus.CONCLUIDA, tipo_aula=TipoAula.SIMULADOR).count()
+        aulas_extras_feitas = a.aulas.filter_by(status=AulaStatus.CONCLUIDA, tipo_aula=TipoAula.EXTRA).count()
+
+        dados_aluno = {
+            'id': a.id, 
+            'nome': a.nome, 
+            'email': a.email, 
+            'cpf': a.cpf,
+            'telefone': a.telefone, 
+            'matricula': a.matricula, 
+            'categoria': a.categoria.value if a.categoria else 'N/D',
+            'aulas_praticas_contratadas': a.aulas_praticas_contratadas,
+            'aulas_simulador_contratadas': a.aulas_simulador_contratadas,
+            'aulas_extras_contratadas': a.aulas_extras_contratadas,
+            # --- NOVOS CAMPOS COM O SALDO ---
+            'aulas_praticas_feitas': aulas_praticas_feitas,
+            'saldo_aulas_praticas': a.aulas_praticas_contratadas - aulas_praticas_feitas,
+            'aulas_simulador_feitas': aulas_simulador_feitas,
+            'saldo_aulas_simulador': a.aulas_simulador_contratadas - aulas_simulador_feitas,
+            'aulas_extras_feitas': aulas_extras_feitas,
+            'saldo_aulas_extras': a.aulas_extras_contratadas - aulas_extras_feitas
+        }
+        lista_de_alunos.append(dados_aluno)
+        
     return jsonify(lista_de_alunos)

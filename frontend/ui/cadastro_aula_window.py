@@ -58,6 +58,18 @@ class CadastroAulaWindow(tk.Toplevel):
         self.hora_combo.grid(row=3, column=1, sticky=tk.E)
         self.hora_combo.set("10:00")
 
+        # --- NOVO CAMPO TIPO DE AULA ---
+        ttk.Label(frame, text="Tipo de Aula:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        tipos_aula = ['PRATICA', 'SIMULADOR', 'EXTRA']
+        self.tipo_aula_combo = ttk.Combobox(frame, values=tipos_aula, state="readonly")
+        self.tipo_aula_combo.grid(row=4, column=1, columnspan=2, sticky=tk.EW, pady=5)
+        self.tipo_aula_combo.set('PRATICA')
+
+        # Ajustar a posição do campo Status e do botão Salvar
+        if self.aula_existente:
+            ttk.Label(frame, text="Status:").grid(row=5, column=0, sticky=tk.W, pady=5)
+            self.status_combo.grid(row=5, column=1, columnspan=2, sticky=tk.EW, pady=5)
+
         if self.aula_existente:
             ttk.Label(frame, text="Status:").grid(row=4, column=0, sticky=tk.W, pady=5)
             self.status_combo = ttk.Combobox(frame, state="readonly", values=['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'])
@@ -65,7 +77,7 @@ class CadastroAulaWindow(tk.Toplevel):
 
         texto_botao = "Atualizar" if self.aula_existente else "Agendar Aula"
         agendar_btn = ttk.Button(frame, text=texto_botao, command=self.salvar)
-        agendar_btn.grid(row=5, columnspan=3, pady=20)
+        agendar_btn.grid(row=6, columnspan=3, pady=20)
 
     def carregar_dados_iniciais(self):
         alunos_data = self.api_client.listar_alunos()
@@ -159,7 +171,8 @@ class CadastroAulaWindow(tk.Toplevel):
             "aluno_id": self.aluno_map[aluno_selecionado],
             "instrutor_id": self.instrutor_map[instrutor_selecionado],
             "veiculo_id": self.veiculo_map[veiculo_selecionado],
-            "data_hora_inicio": data_hora_iso
+            "data_hora_inicio": data_hora_iso,
+            "tipo_aula": self.tipo_aula_combo.get()
         }
         if self.aula_existente:
             dados_aula['status'] = self.status_combo.get().lower()

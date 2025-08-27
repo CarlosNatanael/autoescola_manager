@@ -24,7 +24,7 @@ class AlunosView(ttk.Frame):
         tree_container = ttk.Frame(main_frame, style='View.TFrame')
         tree_container.pack(expand=True, fill='both')
 
-        colunas = ('id', 'nome', 'email', 'cpf', 'matricula', 'categoria')
+        colunas = ('id', 'nome', 'matricula', 'categoria', 'saldo_praticas', 'saldo_simulador')
         self.tree_alunos = ttk.Treeview(tree_container, columns=colunas, show='headings')
         self.tree_alunos.heading('id', text='ID'); self.tree_alunos.column('id', width=40)
         self.tree_alunos.heading('nome', text='Nome'); self.tree_alunos.column('nome', width=250)
@@ -32,6 +32,10 @@ class AlunosView(ttk.Frame):
         self.tree_alunos.heading('cpf', text='CPF'); self.tree_alunos.column('cpf', width=120)
         self.tree_alunos.heading('matricula', text='Matrícula'); self.tree_alunos.column('matricula', width=100)
         self.tree_alunos.heading('categoria', text='Categoria'); self.tree_alunos.column('categoria', width=80, anchor=tk.CENTER)
+        self.tree_alunos.heading('saldo_praticas', text='Saldo Aulas Práticas')
+        self.tree_alunos.column('saldo_praticas', width=140, anchor=tk.CENTER)
+        self.tree_alunos.heading('saldo_simulador', text='Saldo Simulador')
+        self.tree_alunos.column('saldo_simulador', width=120, anchor=tk.CENTER)
         
         self.tree_alunos.pack(expand=True, fill='both', side=tk.LEFT)
 
@@ -63,10 +67,14 @@ class AlunosView(ttk.Frame):
         alunos = self.api.listar_alunos()
         if alunos and 'erro' not in alunos:
             for aluno in alunos:
-
+                saldo_praticas_str = f"{aluno.get('aulas_praticas_feitas', 0)} de {aluno.get('aulas_praticas_contratadas', 0)}"
+                saldo_simulador_str = f"{aluno.get('aulas_simulador_feitas', 0)} de {aluno.get('aulas_simulador_contratadas', 0)}"
+                
                 self.tree_alunos.insert('', tk.END, values=(
-                    aluno['id'], aluno['nome'], aluno['email'], 
-                    aluno['cpf'], aluno['matricula'], aluno.get('categoria', 'N/D')
+                    aluno['id'], aluno['nome'], 
+                    aluno['matricula'], aluno.get('categoria', 'N/D'),
+                    saldo_praticas_str,
+                    saldo_simulador_str
                 ))
         elif alunos and 'erro' in alunos:
             messagebox.showerror("Erro de API", f"Não foi possível buscar os alunos: {alunos['erro']}")
