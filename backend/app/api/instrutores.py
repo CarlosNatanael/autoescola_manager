@@ -9,9 +9,10 @@ def criar_instrutor():
     """Endpoint para cadastrar um novo instrutor."""
     dados = request.get_json()
 
-    campos_obrigatorios = ['nome', 'email', 'cpf', 'categoria', 'senha']
+    campos_obrigatorios = ['nome', 'email', 'cpf', 'cnh']
     if not dados or not all(campo in dados for campo in campos_obrigatorios):
-        return jsonify({'erro': 'Nome, email, cpf, categoria e senha são obrigatórios.'}), 400
+        return jsonify({'erro': 'Nome, email, cpf e CNH são obrigatórios.'}), 400
+
     if Usuario.query.filter_by(email=dados['email']).first():
         return jsonify({'erro': 'Este email já está em uso.'}), 409
     if Usuario.query.filter_by(cpf=dados['cpf']).first():
@@ -24,7 +25,6 @@ def criar_instrutor():
         telefone=dados.get('telefone'),
         cnh=dados['cnh']
     )
-    novo_instrutor.set_password(dados['senha'])
 
     db.session.add(novo_instrutor)
     db.session.commit()

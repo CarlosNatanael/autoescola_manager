@@ -58,6 +58,10 @@ class Aluno(Usuario):
     aulas = db.relationship('Aula', back_populates='aluno', lazy='dynamic')
     categoria = db.Column(db.Enum(CategoriaCNH, native_enum=False), nullable=False)
     
+    # --- CAMPOS PARA CONTROLO DE AULAS ---
+    aulas_praticas_contratadas = db.Column(db.Integer, nullable=False, default=20)
+    aulas_simulador_contratadas = db.Column(db.Integer, nullable=False, default=0)
+    aulas_extras_contratadas = db.Column(db.Integer, nullable=False, default=0)
     __mapper_args__ = {
         'polymorphic_identity': UserRole.ALUNO
     }

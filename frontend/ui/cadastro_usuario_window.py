@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 class CadastroUsuarioWindow(tk.Toplevel):
-    """Janela para cadastrar ou editar um Aluno ou Instrutor."""
     def __init__(self, parent, api_client, on_success, role, usuario_existente=None):
         super().__init__(parent)
         self.api = api_client
@@ -13,7 +12,7 @@ class CadastroUsuarioWindow(tk.Toplevel):
         titulo_acao = "Editar" if self.usuario_existente else "Cadastrar Novo"
         self.title(f"{titulo_acao} {self.role.capitalize()}")
             
-        self.geometry("450x400")
+        self.geometry("450x480")
         self.iconbitmap("icone.ico")
         self.transient(parent)
         self.grab_set()
@@ -35,45 +34,80 @@ class CadastroUsuarioWindow(tk.Toplevel):
             entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=5)
             self.entries[campo.lower()] = entry
 
+        row_seguinte = len(campos)
+
         if self.role == 'aluno':
             label_categoria = ttk.Label(frame, text="Categoria CNH:")
-            label_categoria.grid(row=4, column=0, sticky=tk.W, pady=5)
+            label_categoria.grid(row=row_seguinte, column=0, sticky=tk.W, pady=5)
             categorias = ['A', 'B', 'C', 'D', 'E', 'AB']
             self.categoria_combo = ttk.Combobox(frame, values=categorias, state="readonly")
-            self.categoria_combo.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
+            self.categoria_combo.grid(row=row_seguinte, column=1, sticky=(tk.W, tk.E), pady=5)
             self.categoria_combo.set('B')
+            row_seguinte += 1
+            
+            ttk.Label(frame, text="Aulas Práticas:").grid(row=row_seguinte, column=0, sticky=tk.W, pady=2)
+            self.aulas_praticas_entry = ttk.Entry(frame, width=10)
+            self.aulas_praticas_entry.grid(row=row_seguinte, column=1, sticky=tk.W, pady=2)
+            self.aulas_praticas_entry.insert(0, "20")
+            row_seguinte += 1
+
+            ttk.Label(frame, text="Aulas Simulador:").grid(row=row_seguinte, column=0, sticky=tk.W, pady=2)
+            self.aulas_simulador_entry = ttk.Entry(frame, width=10)
+            self.aulas_simulador_entry.grid(row=row_seguinte, column=1, sticky=tk.W, pady=2)
+            self.aulas_simulador_entry.insert(0, "0")
+            row_seguinte += 1
+
+            ttk.Label(frame, text="Aulas Extras:").grid(row=row_seguinte, column=0, sticky=tk.W, pady=2)
+            self.aulas_extras_entry = ttk.Entry(frame, width=10)
+            self.aulas_extras_entry.grid(row=row_seguinte, column=1, sticky=tk.W, pady=2)
+            self.aulas_extras_entry.insert(0, "0")
+            row_seguinte += 1
 
         if self.role == 'instrutor':
             label_cnh = ttk.Label(frame, text="CNH:")
-            label_cnh.grid(row=4, column=0, sticky=tk.W, pady=5)
+            label_cnh.grid(row=row_seguinte, column=0, sticky=tk.W, pady=5)
             entry_cnh = ttk.Entry(frame, width=35)
-            entry_cnh.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
+            entry_cnh.grid(row=row_seguinte, column=1, sticky=(tk.W, tk.E), pady=5)
             self.entries['cnh'] = entry_cnh
-            
+            row_seguinte += 1
+        
         texto_botao = "Atualizar" if self.usuario_existente else "Salvar"
         btn_salvar = ttk.Button(frame, text=texto_botao, command=self.salvar_usuario)
-        btn_salvar.grid(row=6, column=0, columnspan=2, pady=20)
+        btn_salvar.grid(row=row_seguinte, column=0, columnspan=2, pady=20)
 
     def preencher_dados(self):
         for campo_key, entry in self.entries.items():
             valor = self.usuario_existente.get(campo_key, "")
             entry.insert(0, valor if valor else "")
-        if self.role == 'aluno' and self.usuario_existente.get('categoria'):
-            self.categoria_combo.set(self.usuario_existente['categoria'])
+        if self.role == 'aluno':
+            if self.usuario_existente.get('categoria'):
+                self.categoria_combo.set(self.usuario_existente['categoria'])
+            self.aulas_praticas_entry.delete(0, tk.END)
+            self.aulas_praticas_entry.insert(0, self.usuario_existente.get('aulas_praticas_contratadas', 20))
+            self.aulas_simulador_entry.delete(0, tk.END)
+            self.aulas_simulador_entry.insert(0, self.usuario_existente.get('aulas_simulador_contratadas', 0))
+            self.aulas_extras_entry.delete(0, tk.END)
+            self.aulas_extras_entry.insert(0, self.usuario_existente.get('aulas_extras_contratadas', 0))
 
     def salvar_usuario(self):
         dados_usuario = {campo: entry.get() for campo, entry in self.entries.items()}
 
         if self.role == 'aluno':
             dados_usuario['categoria'] = self.categoria_combo.get()
+            dados_usuario['aulas_praticas_contratadas'] = int(self.aulas_praticas_entry.get() or 0)
+            dados_usuario['aulas_simulador_contratadas'] = int(self.aulas_simulador_entry.get() or 0)
+            dados_usuario['aulas_extras_contratadas'] = int(self.aulas_extras_entry.get() or 0)
+
         campos_obrigatorios = ['nome', 'email', 'cpf']
         if self.role == 'instrutor':
             campos_obrigatorios.append('cnh')
         if self.role == 'aluno':
             campos_obrigatorios.append('categoria')
+
         if not all(dados_usuario.get(key) for key in campos_obrigatorios):
             messagebox.showwarning("Campos Obrigatórios", "Por favor, preencha todos os campos obrigatórios.")
             return
+
         resultado = None
         mensagem_sucesso = ""
 
@@ -89,6 +123,7 @@ class CadastroUsuarioWindow(tk.Toplevel):
             else:
                 resultado = self.api.cadastrar_instrutor(dados_usuario)
             mensagem_sucesso = f"{self.role.capitalize()} cadastrado com sucesso!"
+        
         if resultado and 'erro' not in resultado:
             messagebox.showinfo("Sucesso", mensagem_sucesso)
             self.on_success()

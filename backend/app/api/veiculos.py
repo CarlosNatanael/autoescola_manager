@@ -13,10 +13,10 @@ def criar_veiculo():
         return jsonify({'erro': 'Dados incompletos. Placa, modelo e tipo são obrigatórios.'}), 400
     if Veiculo.query.filter_by(placa=dados['placa']).first():
         return jsonify({'erro': 'Veículo com esta placa já cadastrado.'}), 409
-
+    
     try:
-        tipo_veiculo = TipoVeiculo[dados['tipo']]
-    except KeyError:
+        tipo_veiculo = TipoVeiculo(dados['tipo'])
+    except ValueError:
         return jsonify({'erro': f"Tipo de veículo '{dados['tipo']}' é inválido."}), 400
 
     novo_veiculo = Veiculo(
@@ -26,7 +26,6 @@ def criar_veiculo():
         ano=dados.get('ano'),
         tipo=tipo_veiculo
     )
-
     db.session.add(novo_veiculo)
     db.session.commit()
 
@@ -51,8 +50,8 @@ def atualizar_veiculo(id):
     veiculo.ano = dados.get('ano', veiculo.ano)
     if 'tipo' in dados:
         try:
-            veiculo.tipo = TipoVeiculo[dados['tipo']]
-        except KeyError:
+            veiculo.tipo = TipoVeiculo(dados['tipo'])
+        except ValueError:
             return jsonify({'erro': f"Tipo de veículo '{dados['tipo']}' é inválido."}), 400
 
     db.session.commit()

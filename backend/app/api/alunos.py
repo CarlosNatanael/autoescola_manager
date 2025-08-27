@@ -34,9 +34,9 @@ def criar_aluno():
 
     dados = request.get_json()
 
-    campos_obrigatorios = ['nome', 'email', 'cpf', 'categoria', 'senha']
+    campos_obrigatorios = ['nome', 'email', 'cpf', 'categoria']
     if not dados or not all(campo in dados for campo in campos_obrigatorios):
-        return jsonify({'erro': 'Nome, email, cpf, categoria e senha são obrigatórios.'}), 400
+        return jsonify({'erro': 'Nome, email, cpf, categoria são obrigatórios.'}), 400
     if Usuario.query.filter_by(email=dados['email']).first():
         return jsonify({'erro': 'Este email já está em uso.'}), 409
     if Usuario.query.filter_by(cpf=dados['cpf']).first():
@@ -52,9 +52,11 @@ def criar_aluno():
         cpf=dados['cpf'],
         telefone=dados.get('telefone'),
         matricula=gerar_proxima_matricula(),
-        categoria=categoria_enum
+        categoria=categoria_enum,
+        aulas_praticas_contratadas=dados.get('aulas_praticas_contratadas', 20),
+        aulas_simulador_contratadas=dados.get('aulas_simulador_contratadas', 0),
+        aulas_extras_contratadas=dados.get('aulas_extras_contratadas', 0)
     )
-    novo_aluno.set_password(dados['senha'])
     db.session.add(novo_aluno)
     db.session.commit()
     return jsonify({'mensagem': 'Aluno cadastrado com sucesso!', 'id': novo_aluno.id}), 201
@@ -62,17 +64,23 @@ def criar_aluno():
 @bp.route('/alunos/<int:id>', methods=['PUT'])
 def atualizar_aluno(id):
     """Endpoint para atualizar os dados de um aluno."""
+
     aluno = Aluno.query.get_or_404(id)
     dados = request.get_json()
+
     aluno.nome = dados.get('nome', aluno.nome)
     aluno.email = dados.get('email', aluno.email)
     aluno.cpf = dados.get('cpf', aluno.cpf)
     aluno.telefone = dados.get('telefone', aluno.telefone)
+    aluno.aulas_praticas_contratadas = dados.get('aulas_praticas_contratadas', aluno.aulas_praticas_contratadas)
+    aluno.aulas_simulador_contratadas = dados.get('aulas_simulador_contratadas', aluno.aulas_simulador_contratadas)
+    aluno.aulas_extras_contratadas = dados.get('aulas_extras_contratadas', aluno.aulas_extras_contratadas)
     if 'categoria' in dados:
         try:
             aluno.categoria = CategoriaCNH[dados['categoria']]
         except KeyError:
             return jsonify({'erro': f"Categoria '{dados['categoria']} é inválido'"}), 400
+        
     db.session.commit()
     return jsonify({'mensagem': 'Aluno atualizado com sucesso'})
 
@@ -108,6 +116,9 @@ def listar_alunos():
         'telefone': a.telefone, 
         'matricula': a.matricula, 
         'role': 'aluno',
-        'categoria': a.categoria.value if a.categoria else 'N/D'
+        'categoria': a.categoria.value if a.categoria else 'N/D',
+        'aulas_praticas_contratadas': a.aulas_praticas_contratadas,
+        'aulas_simulador_contratadas': a.aulas_simulador_contratadas,
+        'aulas_extras_contratadas': a.aulas_extras_contratadas
     } for a in alunos]
     return jsonify(lista_de_alunos)
